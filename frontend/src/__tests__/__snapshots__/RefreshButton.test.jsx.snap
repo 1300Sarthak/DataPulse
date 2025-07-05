@@ -1,0 +1,141 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`RefreshButton matches snapshot 1`] = `
+<div>
+  <div
+    class="flex items-center gap-2 "
+  >
+    <div
+      class="flex items-center gap-1"
+    >
+      <span
+        class="text-xs text-gray-500"
+      >
+        Auto
+      </span>
+      <label
+        class="group relative max-w-fit inline-flex items-center justify-start cursor-pointer touch-none tap-highlight-transparent select-none"
+      >
+        <input
+          aria-labelledby="«r2m»"
+          class="font-inherit text-[100%] leading-[1.15] m-0 p-0 overflow-visible box-border absolute top-0 w-full h-full opacity-[0.0001] z-[1] cursor-pointer disabled:cursor-default"
+          data-react-aria-pressable="true"
+          role="switch"
+          tabindex="0"
+          type="checkbox"
+          value=""
+        />
+        <span
+          aria-hidden="true"
+          class="px-1 relative inline-flex items-center justify-start flex-shrink-0 overflow-hidden bg-default-200 rounded-full outline-none group-data-[focus-visible=true]:z-10 group-data-[focus-visible=true]:ring-2 group-data-[focus-visible=true]:ring-focus group-data-[focus-visible=true]:ring-offset-2 group-data-[focus-visible=true]:ring-offset-background group-data-[selected=true]:bg-primary group-data-[selected=true]:text-primary-foreground w-10 h-6 transition-background"
+        >
+          <span
+            class="z-10 flex items-center justify-center bg-white shadow-small rounded-full origin-right pointer-events-none w-4 h-4 text-tiny group-data-[selected=true]:ms-4 transition-all group-data-[pressed=true]:w-5 group-data-[selected]:group-data-[pressed]:ml-3"
+          />
+        </span>
+      </label>
+    </div>
+    <button
+      class="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu data-[pressed=true]:scale-[0.97] outline-none data-[focus-visible=true]:z-10 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-focus data-[focus-visible=true]:outline-offset-2 px-3 min-w-16 h-8 text-tiny gap-2 rounded-small [&>svg]:max-w-[theme(spacing.8)] transition-transform-colors-opacity motion-reduce:transition-none bg-primary/20 text-primary-600 data-[hover=true]:opacity-hover"
+      data-react-aria-pressable="true"
+      tabindex="0"
+      type="button"
+    >
+      <svg
+        aria-hidden="true"
+        class="w-4 h-4"
+        fill="none"
+        focusable="false"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+        />
+      </svg>
+      Refresh
+    </button>
+  </div>
+</div>
+`;
+
+exports[`RefreshButton matches snapshot with auto-refresh enabled 1`] = `
+<div>
+  <div
+    class="flex items-center gap-2 "
+  >
+    <div
+      class="flex items-center gap-1"
+    >
+      <span
+        class="text-xs text-gray-500"
+      >
+        Auto
+      </span>
+      <label
+        class="group relative max-w-fit inline-flex items-center justify-start cursor-pointer touch-none tap-highlight-transparent select-none"
+        data-selected="true"
+      >
+        <input
+          aria-labelledby="«r2n»"
+          class="font-inherit text-[100%] leading-[1.15] m-0 p-0 overflow-visible box-border absolute top-0 w-full h-full opacity-[0.0001] z-[1] cursor-pointer disabled:cursor-default"
+          data-react-aria-pressable="true"
+          role="switch"
+          tabindex="0"
+          type="checkbox"
+          value=""
+        />
+        <span
+          aria-hidden="true"
+          class="px-1 relative inline-flex items-center justify-start flex-shrink-0 overflow-hidden bg-default-200 rounded-full outline-none group-data-[focus-visible=true]:z-10 group-data-[focus-visible=true]:ring-2 group-data-[focus-visible=true]:ring-focus group-data-[focus-visible=true]:ring-offset-2 group-data-[focus-visible=true]:ring-offset-background group-data-[selected=true]:bg-primary group-data-[selected=true]:text-primary-foreground w-10 h-6 transition-background"
+        >
+          <span
+            class="z-10 flex items-center justify-center bg-white shadow-small rounded-full origin-right pointer-events-none w-4 h-4 text-tiny group-data-[selected=true]:ms-4 transition-all group-data-[pressed=true]:w-5 group-data-[selected]:group-data-[pressed]:ml-3"
+          />
+        </span>
+      </label>
+    </div>
+    <button
+      aria-expanded="false"
+      aria-haspopup="true"
+      class="group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal overflow-hidden tap-highlight-transparent transform-gpu data-[pressed=true]:scale-[0.97] outline-none data-[focus-visible=true]:z-10 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-focus data-[focus-visible=true]:outline-offset-2 border-medium h-8 text-tiny gap-2 rounded-small [&>svg]:max-w-[theme(spacing.8)] transition-transform-colors-opacity motion-reduce:transition-none bg-transparent border-default text-foreground data-[hover=true]:opacity-hover z-10 aria-expanded:scale-[0.97] aria-expanded:opacity-70 subpixel-antialiased min-w-0 px-2"
+      data-react-aria-pressable="true"
+      data-slot="trigger"
+      id="react-aria-«r2o»"
+      tabindex="0"
+      type="button"
+    >
+      30s
+    </button>
+    <button
+      class="z-0 group relative inline-flex items-center justify-center box-border appearance-none select-none whitespace-nowrap font-normal subpixel-antialiased overflow-hidden tap-highlight-transparent transform-gpu data-[pressed=true]:scale-[0.97] outline-none data-[focus-visible=true]:z-10 data-[focus-visible=true]:outline-2 data-[focus-visible=true]:outline-focus data-[focus-visible=true]:outline-offset-2 px-3 min-w-16 h-8 text-tiny gap-2 rounded-small [&>svg]:max-w-[theme(spacing.8)] transition-transform-colors-opacity motion-reduce:transition-none bg-success/20 text-success-700 dark:text-success data-[hover=true]:opacity-hover"
+      data-react-aria-pressable="true"
+      disabled=""
+      tabindex="0"
+      type="button"
+    >
+      <div
+        aria-hidden="true"
+        aria-label="Loading"
+        class="relative inline-flex flex-col gap-2 items-center justify-center"
+        focusable="false"
+      >
+        <div
+          class="relative flex w-5 h-5"
+        >
+          <i
+            class="absolute w-full h-full rounded-full border-2 border-b-current animate-spinner-ease-spin border-solid border-t-transparent border-l-transparent border-r-transparent"
+          />
+          <i
+            class="absolute w-full h-full rounded-full border-2 border-b-current opacity-75 animate-spinner-linear-spin border-dotted border-t-transparent border-l-transparent border-r-transparent"
+          />
+        </div>
+      </div>
+      Refreshing...
+    </button>
+  </div>
+</div>
+`;

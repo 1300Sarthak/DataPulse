@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from app.routes import health, crypto, stocks, weather, news, exchange_rate
+from app.routes import health, crypto, stocks, weather, news, exchange_rate, refresh
 from app.database import init_db, engine
 from app.cache import close_redis
 
@@ -48,6 +48,7 @@ app.include_router(stocks.router)
 app.include_router(weather.router)
 app.include_router(news.router)
 app.include_router(exchange_rate.router)
+app.include_router(refresh.router)
 
 
 @app.get("/")
