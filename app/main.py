@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from app.routes import health
+from app.routes import health, crypto
 from app.database import init_db, engine
 from app.cache import close_redis
 
@@ -43,6 +43,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(health.router)
+app.include_router(crypto.router)
 
 
 @app.get("/")
