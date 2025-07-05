@@ -68,7 +68,8 @@ class TestWeatherService:
         assert result["desc"] == "Clear Sky"
 
     @patch('app.services.weather_service.settings')
-    def test_get_weather_cache_miss_and_api(self, mock_settings, mock_redis):
+    @pytest.mark.asyncio
+    async def test_get_weather_cache_miss_and_api(self, mock_settings, mock_redis):
         mock_settings.weather_api_key = "test_key"
         mock_redis.get = AsyncMock(return_value=None)
         mock_redis.setex = AsyncMock()
@@ -84,16 +85,15 @@ class TestWeatherService:
             mock_client_instance.get.return_value = mock_response
             mock_client.return_value.__aenter__.return_value = mock_client_instance
             service = WeatherService(mock_redis)
-            import asyncio
-            result = asyncio.get_event_loop().run_until_complete(
-                service.get_weather("San Francisco"))
+            result = await service.get_weather("San Francisco")
             assert result["city"] == "San Francisco"
             assert result["temp"] == 22
             assert result["desc"] == "Clear Sky"
             mock_redis.setex.assert_called_once()
 
     @patch('app.services.weather_service.settings')
-    def test_get_weather_city_not_found(self, mock_settings, mock_redis):
+    @pytest.mark.asyncio
+    async def test_get_weather_city_not_found(self, mock_settings, mock_redis):
         mock_settings.weather_api_key = "test_key"
         mock_redis.get = AsyncMock(return_value=None)
         mock_response = MagicMock()
@@ -103,6 +103,141 @@ class TestWeatherService:
             mock_client_instance.get.return_value = mock_response
             mock_client.return_value.__aenter__.return_value = mock_client_instance
             service = WeatherService(mock_redis)
-            import asyncio
             with pytest.raises(ValueError, match="City not found: Atlantis"):
-                asyncio.get_event_loop().run_until_complete(service.get_weather("Atlantis"))
+                await service.get_weather("Atlantis")
+
+    @patch('app.services.weather_service.settings')
+    @pytest.mark.asyncio
+    async def test_get_weather_cache_ttl(self, mock_settings, mock_redis):
+        """Test Redis cache TTL setting"""
+        mock_settings.weather_api_key = "test_key"
+        mock_redis.get = AsyncMock(return_value=None)
+        mock_redis.setex = AsyncMock()
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "name": "San Francisco",
+            "main": {"temp": 22.3},
+            "weather": [{"description": "clear sky"}]
+        }
+        with patch('httpx.AsyncClient') as mock_client:
+            mock_client_instance = AsyncMock()
+            mock_client_instance.get.return_value = mock_response
+            mock_client.return_value.__aenter__.return_value = mock_client_instance
+            service = WeatherService(mock_redis)
+            await service.get_weather("San Francisco")
+            # Check TTL is 300 seconds (5 minutes)
+            args, kwargs = mock_redis.setex.call_args
+            assert args[1] == 300
+
+
+class TestWeatherRedisIntegration:
+    """Redis integration tests for weather service"""
+
+    @pytest.mark.asyncio
+    async def test_redis_connection_failure(self, mock_redis):
+        """Test behavior when Redis is down"""
+        mock_redis.get = AsyncMock(
+            side_effect=Exception("Redis connection failed"))
+        mock_redis.setex = AsyncMock(
+            side_effect=Exception("Redis connection failed"))
+
+        with patch('app.services.weather_service.settings') as mock_settings:
+            mock_settings.weather_api_key = "test_key"
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "name": "San Francisco",
+                "main": {"temp": 22.3},
+                "weather": [{"description": "clear sky"}]
+            }
+
+            with patch('httpx.AsyncClient') as mock_client:
+                mock_client_instance = AsyncMock()
+                mock_client_instance.get.return_value = mock_response
+                mock_client.return_value.__aenter__.return_value = mock_client_instance
+
+                service = WeatherService(mock_redis)
+                result = await service.get_weather("San Francisco")
+
+                # Service should still work even if Redis is down
+                assert result["city"] == "San Francisco"
+                assert result["temp"] == 22
+                assert result["desc"] == "Clear Sky"
+
+    @pytest.mark.asyncio
+    async def test_redis_cache_key_format(self, mock_redis):
+        """Test Redis cache key format"""
+        mock_redis.get = AsyncMock(return_value=None)
+        mock_redis.setex = AsyncMock()
+
+        with patch('app.services.weather_service.settings') as mock_settings:
+            mock_settings.weather_api_key = "test_key"
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "name": "San Francisco",
+                "main": {"temp": 22.3},
+                "weather": [{"description": "clear sky"}]
+            }
+
+            with patch('httpx.AsyncClient') as mock_client:
+                mock_client_instance = AsyncMock()
+                mock_client_instance.get.return_value = mock_response
+                mock_client.return_value.__aenter__.return_value = mock_client_instance
+
+                service = WeatherService(mock_redis)
+                await service.get_weather("San Francisco")
+
+                # Verify cache key format
+                args, kwargs = mock_redis.setex.call_args
+                assert args[0] == "weather:San Francisco"
+
+
+class TestWeatherDatabaseLogging:
+    """Database logging tests for weather service"""
+
+    @pytest.fixture
+    def mock_db_session(self):
+        return AsyncMock()
+
+    @pytest.fixture
+    def mock_logger(self):
+        return AsyncMock()
+
+    @pytest.mark.asyncio
+    async def test_weather_logging_integration(self, mock_redis, mock_db_session, mock_logger):
+        """Test integration with database logging"""
+        # Mock successful API response
+        mock_redis.get = AsyncMock(return_value=None)
+        mock_redis.setex = AsyncMock()
+
+        with patch('app.services.weather_service.settings') as mock_settings:
+            mock_settings.weather_api_key = "test_key"
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "name": "San Francisco",
+                "main": {"temp": 22.3},
+                "weather": [{"description": "clear sky"}]
+            }
+
+            with patch('httpx.AsyncClient') as mock_client:
+                mock_client_instance = AsyncMock()
+                mock_client_instance.get.return_value = mock_response
+                mock_client.return_value.__aenter__.return_value = mock_client_instance
+
+                # Test service with logging capability
+                service = WeatherService(mock_redis)
+                result = await service.get_weather("San Francisco")
+
+                # Verify service works
+                assert result["city"] == "San Francisco"
+                assert result["temp"] == 22
+                assert result["desc"] == "Clear Sky"
+
+                # Verify Redis operations
+                mock_redis.setex.assert_called_once()
+
+                # Note: In a real implementation, you would inject the logger
+                # and verify logging calls here

@@ -25,7 +25,7 @@ Required environment variables:
 
 - **API Keys**: `CRYPTO_API_KEY`, `STOCKS_API_KEY`, `WEATHER_API_KEY`, `NEWS_API_KEY`, `EXCHANGE_API_KEY`
 - **Supabase**: `SUPABASE_URL` (your Supabase project URL)
-- **Database**: `SUPABASE_DB_PASSWORD` (default: "tanzillovestogoontonav")
+- **Database**: `SUPABASE_DB_PASSWORD` (set in your .env file)
 - **Redis**: `REDIS_URL` (default: "redis://localhost:6379")
 
 ### 2. Running Locally with Docker

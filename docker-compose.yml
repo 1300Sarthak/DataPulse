@@ -1,25 +1,102 @@
-version: "3.8"
-
 services:
-  app:
-    build: .
-    ports:
-      - "8000:8000"
-    environment:
-      - REDIS_URL=redis://redis:6379
-    depends_on:
-      - redis
-    volumes:
-      - .:/app
-    env_file:
-      - .env
-
+  # Redis for caching
   redis:
     image: redis:7-alpine
+    container_name: datapulse-redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # PostgreSQL for local development (optional)
+  postgres:
+    image: postgres:15-alpine
+    container_name: datapulse-postgres
+    environment:
+      POSTGRES_DB: datapulse
+      POSTGRES_USER: datapulse
+      POSTGRES_PASSWORD: datapulse_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U datapulse -d datapulse"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    profiles:
+      - local-dev
+
+  # FastAPI application (local development with Postgres)
+  app:
+    build: .
+    container_name: datapulse-app
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://datapulse:datapulse_password@postgres:5432/datapulse
+      - FINNHUB_API_KEY=${FINNHUB_API_KEY}
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+      - GNEWS_API_KEY=${GNEWS_API_KEY}
+      - EXCHANGE_API_KEY=${EXCHANGE_API_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+    volumes:
+      - .:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    profiles:
+      - local-dev
+
+  # FastAPI app without Postgres (for production with Supabase)
+  app-prod:
+    build: .
+    container_name: datapulse-app-prod
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - FINNHUB_API_KEY=${FINNHUB_API_KEY}
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+      - GNEWS_API_KEY=${GNEWS_API_KEY}
+      - EXCHANGE_API_KEY=${EXCHANGE_API_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+    volumes:
+      - .:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    profiles:
+      - production
 
 volumes:
   redis_data:
+    driver: local
+  postgres_data:
+    driver: local
