@@ -10,6 +10,12 @@ class Settings(BaseSettings):
     news_api_key: Optional[str] = None
     exchange_api_key: Optional[str] = None
 
+    # Environment variable aliases for API keys
+    finnhub_api_key: Optional[str] = None
+    openweather_api_key: Optional[str] = None
+    gnews_api_key: Optional[str] = None
+    supabase_key: Optional[str] = None
+
     # Supabase Configuration
     supabase_url: str
     supabase_db_password: str
