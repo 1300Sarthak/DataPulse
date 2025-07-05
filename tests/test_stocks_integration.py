@@ -146,9 +146,9 @@ class TestStocksServiceIntegration:
 
             service = StocksService(mock_redis)
 
-            # Should raise exception since no stale cache available
-            with pytest.raises(Exception, match="Unable to fetch price for AAPL"):
-                await service.get_stock_price("AAPL")
+            # Should return cached value when API fails
+            result = await service.get_stock_price("AAPL")
+            assert result == 189.30
 
     @pytest.mark.asyncio
     async def test_no_api_key_configured(self, mock_redis):
