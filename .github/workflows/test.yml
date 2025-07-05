@@ -55,7 +55,7 @@ jobs:
 
       - name: Create test environment
         run: |
-          cp env.example .env
+          cp .env.example .env
           echo "FINNHUB_API_KEY=test_key" >> .env
           echo "OPENWEATHER_API_KEY=test_key" >> .env
           echo "GNEWS_API_KEY=test_key" >> .env
