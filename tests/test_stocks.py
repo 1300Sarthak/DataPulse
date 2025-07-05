@@ -94,17 +94,61 @@ class TestStocksEndpoint:
 
 class TestStocksService:
     @patch('app.services.stocks_service.settings')
-    def test_get_stock_price_cache_hit(self, mock_settings, mock_redis):
+    @pytest.mark.asyncio
+    async def test_get_stock_price_cache_hit(self, mock_settings, mock_redis):
         """Test cache hit scenario"""
         mock_settings.stocks_api_key = "test_key"
-        mock_redis.get.return_value = "189.30"
+        mock_redis.get = AsyncMock(return_value="189.30")
 
         service = StocksService(mock_redis)
+        result = await service.get_stock_price("AAPL")
 
-        # This would be async in real usage, but we're testing the logic
-        # In a real test, you'd use pytest-asyncio
+        assert result == 189.30
         assert service.cache_ttl == 60
         assert service.finnhub_key == "test_key"
+
+    @patch('app.services.stocks_service.settings')
+    @pytest.mark.asyncio
+    async def test_get_stock_price_cache_miss_and_api(self, mock_settings, mock_redis):
+        """Test cache miss and API call"""
+        mock_settings.stocks_api_key = "test_key"
+        mock_redis.get = AsyncMock(return_value=None)
+        mock_redis.setex = AsyncMock()
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"c": 189.30}
+
+        with patch('httpx.AsyncClient') as mock_client:
+            mock_client_instance = AsyncMock()
+            mock_client_instance.get.return_value = mock_response
+            mock_client.return_value.__aenter__.return_value = mock_client_instance
+
+            service = StocksService(mock_redis)
+            result = await service.get_stock_price("AAPL")
+
+            assert result == 189.30
+            mock_redis.setex.assert_called_once()
+
+    @patch('app.services.stocks_service.settings')
+    @pytest.mark.asyncio
+    async def test_get_stock_price_api_rate_limit(self, mock_settings, mock_redis):
+        """Test API rate limit handling"""
+        mock_settings.stocks_api_key = "test_key"
+        mock_redis.get = AsyncMock(return_value=None)
+        mock_redis.setex = AsyncMock()
+
+        mock_response = MagicMock()
+        mock_response.status_code = 403
+
+        with patch('httpx.AsyncClient') as mock_client:
+            mock_client_instance = AsyncMock()
+            mock_client_instance.get.return_value = mock_response
+            mock_client.return_value.__aenter__.return_value = mock_client_instance
+
+            service = StocksService(mock_redis)
+            with pytest.raises(Exception, match="API rate limit exceeded"):
+                await service.get_stock_price("AAPL")
 
     @patch('app.services.stocks_service.settings')
     def test_get_stock_price_no_api_key(self, mock_settings, mock_redis):
@@ -115,34 +159,121 @@ class TestStocksService:
         assert service.finnhub_key is None
 
     @patch('app.services.stocks_service.settings')
-    def test_cache_key_format(self, mock_settings, mock_redis):
+    @pytest.mark.asyncio
+    async def test_cache_key_format(self, mock_settings, mock_redis):
         """Test cache key format"""
         mock_settings.stocks_api_key = "test_key"
+        mock_redis.get = AsyncMock(return_value=None)
+        mock_redis.setex = AsyncMock()
 
-        service = StocksService(mock_redis)
-        # The cache key should be formatted as "stock_price:{symbol}"
-        # This is used internally in the service
-        expected_key = "stock_price:AAPL"
-        # We can't directly test the private method, but we can verify the pattern
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"c": 189.30}
+
+        with patch('httpx.AsyncClient') as mock_client:
+            mock_client_instance = AsyncMock()
+            mock_client_instance.get.return_value = mock_response
+            mock_client.return_value.__aenter__.return_value = mock_client_instance
+
+            service = StocksService(mock_redis)
+            await service.get_stock_price("AAPL")
+
+            # Verify cache key format
+            args, kwargs = mock_redis.setex.call_args
+            assert args[0] == "stock_price:AAPL"
 
 
-class TestRedisIntegration:
-    @patch('app.cache.redis_client')
-    def test_redis_down_scenario(self, mock_redis_client):
+class TestStocksRedisIntegration:
+    """Redis integration tests for stocks service"""
+
+    @pytest.mark.asyncio
+    async def test_redis_connection_failure(self, mock_redis):
         """Test behavior when Redis is down"""
-        # Mock Redis to raise an exception
-        mock_redis_client.get.side_effect = Exception(
-            "Redis connection failed")
+        mock_redis.get = AsyncMock(
+            side_effect=Exception("Redis connection failed"))
+        mock_redis.setex = AsyncMock(
+            side_effect=Exception("Redis connection failed"))
 
-        # This would be tested in integration tests
-        # The service should handle Redis failures gracefully
-        pass
+        with patch('app.services.stocks_service.settings') as mock_settings:
+            mock_settings.stocks_api_key = "test_key"
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {"c": 189.30}
 
-    @patch('app.cache.redis_client')
-    def test_redis_cache_setex(self, mock_redis_client):
-        """Test Redis cache setex operation"""
-        mock_redis_client.setex = AsyncMock()
+            with patch('httpx.AsyncClient') as mock_client:
+                mock_client_instance = AsyncMock()
+                mock_client_instance.get.return_value = mock_response
+                mock_client.return_value.__aenter__.return_value = mock_client_instance
 
-        # This would be tested in integration tests
-        # Verify that setex is called with correct TTL
-        pass
+                service = StocksService(mock_redis)
+                result = await service.get_stock_price("AAPL")
+
+                # Service should still work even if Redis is down
+                assert result == 189.30
+
+    @pytest.mark.asyncio
+    async def test_redis_cache_ttl(self, mock_redis):
+        """Test Redis cache TTL setting"""
+        mock_redis.get = AsyncMock(return_value=None)
+        mock_redis.setex = AsyncMock()
+
+        with patch('app.services.stocks_service.settings') as mock_settings:
+            mock_settings.stocks_api_key = "test_key"
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {"c": 189.30}
+
+            with patch('httpx.AsyncClient') as mock_client:
+                mock_client_instance = AsyncMock()
+                mock_client_instance.get.return_value = mock_response
+                mock_client.return_value.__aenter__.return_value = mock_client_instance
+
+                service = StocksService(mock_redis)
+                await service.get_stock_price("AAPL")
+
+                # Check TTL is 60 seconds
+                args, kwargs = mock_redis.setex.call_args
+                assert args[1] == 60
+
+
+class TestStocksDatabaseLogging:
+    """Database logging tests for stocks service"""
+
+    @pytest.fixture
+    def mock_db_session(self):
+        return AsyncMock()
+
+    @pytest.fixture
+    def mock_logger(self):
+        return AsyncMock()
+
+    @pytest.mark.asyncio
+    async def test_stocks_logging_integration(self, mock_redis, mock_db_session, mock_logger):
+        """Test integration with database logging"""
+        # Mock successful API response
+        mock_redis.get = AsyncMock(return_value=None)
+        mock_redis.setex = AsyncMock()
+
+        with patch('app.services.stocks_service.settings') as mock_settings:
+            mock_settings.stocks_api_key = "test_key"
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {"c": 189.30}
+
+            with patch('httpx.AsyncClient') as mock_client:
+                mock_client_instance = AsyncMock()
+                mock_client_instance.get.return_value = mock_response
+                mock_client.return_value.__aenter__.return_value = mock_client_instance
+
+                # Test service with logging capability
+                service = StocksService(mock_redis)
+                result = await service.get_stock_price("AAPL")
+
+                # Verify service works
+                assert result == 189.30
+
+                # Verify Redis operations
+                mock_redis.setex.assert_called_once()
+
+                # Note: In a real implementation, you would inject the logger
+                # and verify logging calls here
