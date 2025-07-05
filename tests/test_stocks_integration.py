@@ -14,7 +14,7 @@ def mock_redis():
 @pytest.fixture
 def mock_settings():
     with patch('app.services.stocks_service.settings') as mock:
-        mock.stocks_api_key = "d1kkle1r01qt8fop2l70d1kkle1r01qt8fop2l7g"
+        mock.stocks_api_key = "test_api_key_placeholder"
         yield mock
 
 
