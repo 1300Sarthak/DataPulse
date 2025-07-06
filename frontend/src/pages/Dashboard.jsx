@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Button, Chip } from "@heroui/react";
+import { Button, Chip, Select, SelectItem } from "@heroui/react";
 import BentoCard from "../components/BentoCard";
 import WeatherCard from "../components/WeatherCard";
 import NewsCard from "../components/NewsCard";
@@ -8,44 +8,25 @@ import { useErrorToast } from "../context/ErrorToastContext";
 import { useSettings } from "../context/SettingsContext";
 import apiService from "../services/api.js";
 
+const NEWS_TIME_RANGES = [
+  { key: "1h", label: "Last Hour" },
+  { key: "24h", label: "24 Hours" },
+  { key: "7d", label: "1 Week" },
+  { key: "30d", label: "30 Days" }
+];
+
 const Dashboard = () => {
   const [cryptoData, setCryptoData] = useState([]);
   const [stockData, setStockData] = useState([]);
   const [newsData, setNewsData] = useState([]);
   const [exchangeRates, setExchangeRates] = useState(null);
+  const [newsTimeRange, setNewsTimeRange] = useState("24h");
 
   const [loading, setLoading] = useState(true);
+  const [newsLoading, setNewsLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const { showError } = useErrorToast();
   const { settings } = useSettings();
-
-  // Mock data for demonstration
-  const mockNewsData = [
-    {
-      title: "Bitcoin Surges Past $43,000 as Institutional Adoption Grows",
-      symbol: "BTC",
-      image: "https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=400&h=200&fit=crop",
-      url: "https://example.com/bitcoin-news-1"
-    },
-    {
-      title: "Tesla Reports Strong Q4 Earnings, Stock Climbs 5%",
-      symbol: "TSLA",
-      image: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400&h=200&fit=crop",
-      url: "https://example.com/tesla-news-1"
-    },
-    {
-      title: "Federal Reserve Signals Potential Rate Cuts in 2024",
-      symbol: "FED",
-      image: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=400&h=200&fit=crop",
-      url: "https://example.com/fed-news-1"
-    },
-    {
-      title: "Ethereum Layer 2 Solutions See Record Growth",
-      symbol: "ETH",
-      image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=200&fit=crop",
-      url: "https://example.com/ethereum-news-1"
-    }
-  ];
 
   // Fetch data from APIs
   const fetchData = async () => {
@@ -89,10 +70,6 @@ const Dashboard = () => {
         }));
       setStockData(stockArray);
 
-      // Fetch news data (keep fallback for news only)
-      const newsResponse = await apiService.getNews();
-      setNewsData(Array.isArray(newsResponse) ? newsResponse : mockNewsData);
-
       // Fetch exchange rates
       const rates = await apiService.getExchangeRates();
       setExchangeRates(rates);
@@ -104,16 +81,32 @@ const Dashboard = () => {
       // Fallback to empty arrays for critical data
       setCryptoData([]);
       setStockData([]);
-      setNewsData(mockNewsData);
       setExchangeRates(null);
     } finally {
       setLoading(false);
     }
   };
 
+  // Fetch news for selected time range
+  const fetchNews = async (timeRange) => {
+    setNewsLoading(true);
+    try {
+      const url = `/news/?time_range=${timeRange}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      setNewsData(Array.isArray(data) ? data.slice(0, 20) : []);
+    } catch {
+      setNewsData([]);
+      if (typeof showError === 'function') showError("Failed to fetch news");
+    } finally {
+      setNewsLoading(false);
+    }
+  };
+
   // Handle refresh
   const handleRefresh = async () => {
     await fetchData();
+    await fetchNews(newsTimeRange);
   };
 
   // Initialize data
@@ -121,21 +114,28 @@ const Dashboard = () => {
     fetchData();
   }, []); // Only fetch on mount
 
+  // Fetch news when time range changes
+  useEffect(() => {
+    fetchNews(newsTimeRange);
+  }, [newsTimeRange]);
+
   // Re-fetch when stock or crypto symbols change
   useEffect(() => {
-    if (lastUpdated) { // Only re-fetch if we've already loaded data once
+    if (lastUpdated) {
       fetchData();
+      fetchNews(newsTimeRange);
     }
-  }, [settings.stocks.symbols, settings.crypto.symbols]); // Only re-fetch when symbols change
+  }, [settings.stocks.symbols, settings.crypto.symbols]);
 
   // Auto-refresh based on settings
   useEffect(() => {
     const interval = setInterval(() => {
       fetchData();
+      fetchNews(newsTimeRange);
     }, Math.min(settings.stocks.refreshInterval, settings.crypto.refreshInterval) * 1000);
 
     return () => clearInterval(interval);
-  }, [settings.stocks.refreshInterval, settings.crypto.refreshInterval]);
+  }, [settings.stocks.refreshInterval, settings.crypto.refreshInterval, newsTimeRange]);
 
   // Format last updated time
   const formatLastUpdated = () => {
@@ -152,6 +152,48 @@ const Dashboard = () => {
   const safeStockData = Array.isArray(stockData) ? stockData : [];
   const safeNewsData = Array.isArray(newsData) ? newsData : [];
 
+  // Function to shuffle array
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  // Combine all cards and shuffle them
+  const allCards = [
+    // Crypto cards
+    ...safeCryptoData.map((crypto, i) => ({
+      ...(crypto || { title: 'Crypto', price: '', change: '', symbol: '', type: 'crypto' }),
+      loading: !crypto,
+      key: `crypto-${crypto?.symbol || i}`,
+      component: 'BentoCard'
+    })),
+    // Stock cards
+    ...(safeStockData.length > 0 ? safeStockData : Array(4).fill(null)).map((stock, i) => ({
+      ...(stock || { title: 'Stock', price: '', change: '', symbol: '', type: 'stock' }),
+      loading: !stock,
+      key: `stock-${i}`,
+      component: 'BentoCard'
+    })),
+    // Weather card
+    { key: 'weather', component: 'WeatherCard' },
+    // Exchange rate card
+    { key: 'exchange-rate', component: 'ExchangeRateCard', rates: exchangeRates, loading }
+  ];
+
+  // Use state to store shuffled cards so they persist during re-renders
+  const [shuffledCards, setShuffledCards] = useState([]);
+
+  // Shuffle cards when data changes
+  useEffect(() => {
+    if (allCards.length > 0) {
+      setShuffledCards(shuffleArray(allCards));
+    }
+  }, [safeCryptoData, safeStockData, exchangeRates, loading]);
+
   return (
     <div className="p-8">
       {/* Header */}
@@ -162,7 +204,7 @@ const Dashboard = () => {
               DataPulse Dashboard
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-100 mt-1 transition-colors">
-              Real-time financial data and market insights
+              All your information in one place at one time
             </p>
           </div>
           <div className="flex items-center gap-6">
@@ -173,65 +215,80 @@ const Dashboard = () => {
               color="primary"
               variant="solid"
               onClick={handleRefresh}
-              disabled={loading}
+              disabled={loading || newsLoading}
               className="font-medium px-6 py-2 text-lg"
             >
-              {loading ? "Refreshing..." : "Refresh"}
+              {(loading || newsLoading) ? "Refreshing..." : "Refresh"}
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Simple Responsive Grid */}
-      <div className="max-w-screen-2xl mx-auto">
+      {/* Main Dashboard Grid */}
+      <div className="max-w-screen-2xl mx-auto mb-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-[minmax(150px,auto)] gap-8">
-          {/* BTC Card (large) */}
-          {safeCryptoData.find(c => c && c.symbol === 'BTC') && (
-            <BentoCard
-              {...safeCryptoData.find(c => c && c.symbol === 'BTC')}
-              size="md"
-              loading={loading}
-              key="crypto-btc"
-              className="card-light dark:card-dark transition-colors duration-500 col-span-2 row-span-2"
-            />
+          {shuffledCards.map((card) => {
+            if (card.component === 'BentoCard') {
+              return (
+                <BentoCard
+                  key={card.key}
+                  title={card.title}
+                  symbol={card.symbol}
+                  price={card.price}
+                  change={card.change}
+                  type={card.type}
+                  loading={card.loading}
+                />
+              );
+            } else if (card.component === 'WeatherCard') {
+              return <WeatherCard key={card.key} />;
+            } else if (card.component === 'ExchangeRateCard') {
+              return <ExchangeRateCard key={card.key} rates={card.rates} loading={card.loading} />;
+            }
+            return null;
+          })}
+        </div>
+      </div>
+
+      {/* News Section */}
+      <div className="max-w-screen-2xl mx-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Top News</h2>
+          <Select
+            label="Time Range"
+            value={newsTimeRange}
+            onChange={e => setNewsTimeRange(e.target.value)}
+            className="w-48"
+          >
+            {NEWS_TIME_RANGES.map(range => (
+              <SelectItem key={range.key} value={range.key}>
+                {range.label}
+              </SelectItem>
+            ))}
+          </Select>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-[minmax(150px,auto)] gap-6">
+          {newsLoading ? (
+            <div className="col-span-full text-center py-10">
+              <span className="text-lg text-gray-500 dark:text-gray-400">Loading news...</span>
+            </div>
+          ) : safeNewsData.length === 0 ? (
+            <div className="col-span-full text-center py-10">
+              <span className="text-lg text-gray-500 dark:text-gray-400">No news found for this time range.</span>
+            </div>
+          ) : (
+            safeNewsData.map((news, i) => (
+              <NewsCard
+                key={`news-${i}`}
+                title={news.title}
+                source={news.source}
+                image={news.image}
+                publishedAt={news.publishedAt}
+                url={news.url}
+                loading={newsLoading}
+              />
+            ))
           )}
-          {/* Other Crypto Cards */}
-          {safeCryptoData.filter(c => c && c.symbol !== 'BTC').map((crypto, i) => (
-            <BentoCard
-              {...(crypto || { title: 'Crypto', price: '', change: '', symbol: '', type: 'crypto' })}
-              size="md"
-              loading={!crypto}
-              key={`crypto-${crypto?.symbol || i}`}
-              className="card-light dark:card-dark transition-colors duration-500 col-span-1 row-span-1"
-            />
-          ))}
-          {/* Stock Cards or Placeholders */}
-          {(safeStockData.length > 0 ? safeStockData : Array(4).fill(null)).map((stock, i) => (
-            <BentoCard
-              {...(stock || { title: 'Stock', price: '', change: '', symbol: '', type: 'stock' })}
-              size="md"
-              loading={!stock}
-              key={`stock-${i}`}
-              className="card-light dark:card-dark transition-colors duration-500"
-            />
-          ))}
-          {/* Weather Card */}
-          <WeatherCard size="md" key="weather" />
-          {/* Exchange Rate Card */}
-          <ExchangeRateCard rates={exchangeRates} loading={loading} key="exchange-rate" />
-          {/* News Cards */}
-          {safeNewsData.map((news, i) => (
-            <NewsCard
-              key={`news-${i}`}
-              title={news.title}
-              source={news.source}
-              image={news.image}
-              publishedAt={news.publishedAt}
-              url={news.url}
-              loading={loading}
-              className="h-64"
-            />
-          ))}
         </div>
       </div>
     </div>

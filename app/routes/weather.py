@@ -9,6 +9,12 @@ class WeatherResponse(BaseModel):
     city: str
     temp: int
     desc: str
+    icon: str
+    humidity: int
+    wind_speed: float
+    feels_like: int
+    pressure: int
+    visibility: float
 
 
 router = APIRouter(prefix="/weather", tags=["weather"])

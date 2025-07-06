@@ -42,8 +42,16 @@ export const useApiService = () => {
       const response = await fetchWithTimeout(`${API_BASE_URL}/stocks/?symbol=${symbol}`, {}, 10000, errorToast);
       return response.json();
     },
+    async getStockHistoricalData(symbol, period = "1D") {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/stocks/historical/${symbol}?period=${period}`, {}, 10000, errorToast);
+      return response.json();
+    },
     async getCryptoPrices(topN = 50) {
       const response = await fetchWithTimeout(`${API_BASE_URL}/crypto/?top_n=${topN}`, {}, 10000, errorToast);
+      return response.json();
+    },
+    async getCryptoHistoricalData(symbol, days = "1") {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/crypto/historical/${symbol}?days=${days}`, {}, 10000, errorToast);
       return response.json();
     },
     async getWeather(city, unit = 'C') {
@@ -78,8 +86,16 @@ const apiService = {
     const response = await fetchWithTimeout(`${API_BASE_URL}/stocks/?symbol=${symbol}`);
     return response.json();
   },
+  async getStockHistoricalData(symbol, period = "1D") {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/stocks/historical/${symbol}?period=${period}`);
+    return response.json();
+  },
   async getCryptoPrices(topN = 50) {
     const response = await fetchWithTimeout(`${API_BASE_URL}/crypto/?top_n=${topN}`);
+    return response.json();
+  },
+  async getCryptoHistoricalData(symbol, days = "1") {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/crypto/historical/${symbol}?days=${days}`);
     return response.json();
   },
   async getWeather(city, unit = 'C') {

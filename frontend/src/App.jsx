@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 import Settings from "./pages/Settings";
 import CryptoPage from "./pages/CryptoPage";
 import StocksPage from "./pages/StocksPage";
+import NewsPage from "./pages/NewsPage";
 import WeatherPage from "./pages/WeatherPage";
 import ExchangeRatePage from "./pages/ExchangeRatePage";
 import "./index.css";
@@ -26,6 +27,7 @@ function App() {
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/crypto" element={<CryptoPage />} />
                   <Route path="/stocks" element={<StocksPage />} />
+                  <Route path="/news" element={<NewsPage />} />
                   <Route path="/weather" element={<WeatherPage />} />
                   <Route path="/exchange-rate" element={<ExchangeRatePage />} />
                 </Routes>

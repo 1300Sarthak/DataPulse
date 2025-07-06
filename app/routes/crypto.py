@@ -3,6 +3,9 @@ import redis.asyncio as redis
 from app.cache import get_redis
 from app.services.crypto_service import CryptoService
 from typing import List, Dict, Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/crypto", tags=["crypto"])
 
@@ -68,7 +71,11 @@ async def get_crypto_historical_data(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=503,
-            detail=f"Unable to fetch crypto historical data: {str(e)}"
-        )
+        if "rate limit" in str(e).lower():
+            raise HTTPException(
+                status_code=429, detail="API rate limit exceeded")
+        else:
+            raise HTTPException(
+                status_code=503,
+                detail=f"Unable to fetch crypto historical data: {str(e)}"
+            )

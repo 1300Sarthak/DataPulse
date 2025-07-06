@@ -10,25 +10,16 @@ const BentoCard = ({
   change, 
   image,
   url,
-  size = "md",
   onClick,
-  loading = false 
+  loading = false,
+  className = ""
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
   const [isChartOpen, setIsChartOpen] = useState(false);
 
   // Determine card dimensions based on size
   const getSizeClasses = () => {
-    switch (size) {
-      case "lg":
-        return "w-80 h-64"; // Large cards
-      case "md":
-        return "w-64 h-48"; // Medium cards
-      case "sm":
-        return "w-48 h-40"; // Small cards
-      default:
-        return "w-64 h-48";
-    }
+    // Use responsive grid classes instead of fixed sizes
+    return "col-span-1 row-span-1";
   };
 
   // Format price
@@ -95,13 +86,13 @@ const BentoCard = ({
   if (loading) {
     return (
       <Card 
-        className={`${getSizeClasses()} rounded-3xl shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer animate-pulse`}
+        className={`${getSizeClasses()} rounded-2xl shadow-md hover:scale-[1.02] transition-transform duration-200 animate-pulse card-light dark:card-dark`}
       >
-        <CardBody className="p-6">
-          <div className="space-y-3">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-6 bg-gray-200 rounded w-1/2"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+        <CardBody className="p-4">
+          <div className="space-y-2">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+            <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+            <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
           </div>
         </CardBody>
       </Card>
@@ -111,14 +102,10 @@ const BentoCard = ({
   return (
     <>
       <Card 
-        className={`${getSizeClasses()} rounded-3xl shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer ${
-          isHovered ? 'shadow-xl' : ''
-        }`}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        className={`${getSizeClasses()} rounded-2xl shadow-md hover:scale-[1.02] transition-transform duration-200 cursor-pointer card-light dark:card-dark ${className}`}
         onClick={handleClick}
       >
-        <CardBody className="p-6 h-full">
+        <CardBody className="p-4 flex flex-col h-full">
           {type === "news" ? (
             // News card layout
             <div className="flex flex-col h-full">
@@ -148,14 +135,14 @@ const BentoCard = ({
             </div>
           ) : (
             // Crypto/Stock card layout
-            <div className="flex flex-col h-full">
+            <>
               {/* Header */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-sm transition-colors">
                     {title}
                   </h3>
-                  <p className="text-xs text-gray-500">{symbol}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 transition-colors">{symbol}</p>
                 </div>
                 <Chip 
                   size="sm" 
@@ -168,7 +155,7 @@ const BentoCard = ({
 
               {/* Price and Change */}
               <div className="flex-1 flex flex-col justify-center">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1 transition-colors">
                   {formatPrice(price)}
                 </div>
                 <div className={`flex items-center gap-2 text-sm font-medium ${getChangeColor()}`}>
@@ -176,24 +163,7 @@ const BentoCard = ({
                   <span>{formatChange(change)}</span>
                 </div>
               </div>
-
-              {/* Additional info for large cards */}
-              {size === "lg" && (
-                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-                  <div className="text-xs text-gray-500 space-y-1">
-                    <div>Market Cap: $1.2T</div>
-                    <div>Volume: 24.5M</div>
-                  </div>
-                </div>
-              )}
-
-              {/* Click hint for crypto/stock cards */}
-              {(type === "crypto" || type === "stock") && (
-                <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  Click to view chart
-                </div>
-              )}
-            </div>
+            </>
           )}
         </CardBody>
       </Card>

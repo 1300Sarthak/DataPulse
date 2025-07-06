@@ -13,11 +13,11 @@ export const useSettings = () => {
 export const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState({
     stocks: {
-      symbols: ['AAPL', 'TSLA', 'GOOGL', 'MSFT'],
+      symbols: ['AAPL', 'TSLA', 'GOOGL', 'MSFT', 'AMZN', 'NVDA', 'META', 'NFLX'],
       refreshInterval: 60
     },
     weather: {
-      unit: 'C',
+      unit: 'F',
       city: 'San Francisco',
       autoLocation: true
     },
@@ -29,7 +29,7 @@ export const SettingsProvider = ({ children }) => {
       maxArticles: 4
     },
     crypto: {
-      symbols: ['BTC', 'ETH'],
+      symbols: ['BTC', 'ETH', 'BNB', 'SOL', 'ADA'],
       refreshInterval: 60
     }
   });
@@ -82,11 +82,11 @@ export const SettingsProvider = ({ children }) => {
   const resetSettings = () => {
     const defaultSettings = {
       stocks: {
-        symbols: ['AAPL', 'TSLA', 'GOOGL', 'MSFT'],
+        symbols: ['AAPL', 'TSLA', 'GOOGL', 'MSFT', 'AMZN', 'NVDA', 'META', 'NFLX'],
         refreshInterval: 60
       },
       weather: {
-        unit: 'C',
+        unit: 'F',
         city: 'San Francisco',
         autoLocation: true
       },
@@ -98,7 +98,7 @@ export const SettingsProvider = ({ children }) => {
         maxArticles: 4
       },
       crypto: {
-        symbols: ['BTC', 'ETH'],
+        symbols: ['BTC', 'ETH', 'BNB', 'SOL', 'ADA'],
         refreshInterval: 60
       }
     };

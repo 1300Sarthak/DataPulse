@@ -71,7 +71,14 @@ class WeatherService:
                 return {
                     "city": data["name"],
                     "temp": round(data["main"]["temp"]),
-                    "desc": data["weather"][0]["description"].title()
+                    "desc": data["weather"][0]["description"].title(),
+                    "icon": data["weather"][0]["icon"],
+                    "humidity": data["main"]["humidity"],
+                    "wind_speed": data["wind"]["speed"],
+                    "feels_like": round(data["main"]["feels_like"]),
+                    "pressure": data["main"]["pressure"],
+                    # Convert to km
+                    "visibility": data.get("visibility", 10000) / 1000
                 }
         except ValueError:
             raise

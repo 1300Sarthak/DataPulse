@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
     # Environment variable aliases for API keys
     finnhub_api_key: Optional[str] = None
+    coingecko_api_key: Optional[str] = None
     openweather_api_key: Optional[str] = None
     gnews_api_key: Optional[str] = None
     supabase_key: Optional[str] = None
@@ -33,6 +34,16 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = False
+
+    @property
+    def crypto_api_key_resolved(self) -> Optional[str]:
+        """Get crypto API key from environment"""
+        return self.crypto_api_key or self.coingecko_api_key
+
+    @property
+    def stocks_api_key_resolved(self) -> Optional[str]:
+        """Get stocks API key from environment"""
+        return self.stocks_api_key or self.finnhub_api_key
 
     @property
     def database_url_async(self) -> str:

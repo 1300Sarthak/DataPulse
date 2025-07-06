@@ -16,7 +16,17 @@ except Exception as e:
 async def get_redis():
     """Dependency to get Redis client"""
     if redis_client is None:
-        raise Exception("Redis client not available")
+        # Return a mock Redis client that does nothing
+        class MockRedis:
+            async def get(self, key):
+                return None
+
+            async def setex(self, key, ttl, value):
+                pass
+
+            async def close(self):
+                pass
+        return MockRedis()
     return redis_client
 
 

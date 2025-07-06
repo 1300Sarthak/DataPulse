@@ -4,6 +4,9 @@ import redis.asyncio as redis
 from app.cache import get_redis
 from app.services.stocks_service import StocksService
 from typing import Dict
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class StockPriceResponse(BaseModel):
