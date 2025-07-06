@@ -5,7 +5,7 @@ from .config import settings
 
 # Create async engine
 engine = create_async_engine(
-    settings.database_url_async,
+    settings.database_url_async.replace("postgresql://", "postgresql+asyncpg://"),
     echo=False,
     poolclass=NullPool,
     future=True

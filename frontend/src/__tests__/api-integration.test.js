@@ -3,7 +3,7 @@ import.meta.env = {
   VITE_API_BASE_URL: 'http://localhost:8000'
 };
 
-import { apiService } from '../services/api';
+import apiService from '../services/api';
 
 // Mock fetch globally
 global.fetch = jest.fn();

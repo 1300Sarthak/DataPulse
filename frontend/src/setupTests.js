@@ -29,4 +29,18 @@ if (typeof globalThis !== 'undefined' && typeof globalThis.jest !== 'undefined')
     unobserve: globalThis.jest.fn(),
     disconnect: globalThis.jest.fn(),
   }));
-} 
+}
+
+// Mock import.meta.env
+Object.defineProperty(globalThis, 'import', {
+  configurable: true,
+  value: {
+    meta: {
+      env: {
+        VITE_API_BASE_URL: 'http://localhost:8000',
+        VITE_OPENWEATHER_API_KEY: 'mock_openweather_api_key',
+        VITE_FINNHUB_API_KEY: 'mock_finnhub_api_key',
+      },
+    },
+  },
+});

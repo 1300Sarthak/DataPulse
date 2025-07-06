@@ -1,217 +1,294 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Card, CardBody, CardHeader, Button, Chip } from "@heroui/react";
-import ChartComponent from '../components/ChartComponent';
-import NewsFeed from '../components/NewsFeed';
-import RefreshButton from '../components/RefreshButton';
-import { useApiService } from '../services/api';
+import React, { useState, useEffect } from "react";
+import { Button, Chip, Select, SelectItem } from "@heroui/react";
+import BentoCard from "../components/BentoCard";
+import WeatherCard from "../components/WeatherCard";
+import NewsCard from "../components/NewsCard";
+import ExchangeRateCard from "../components/ExchangeRateCard";
+import { useErrorToast } from "../context/ErrorToastContext";
+import { useSettings } from "../context/SettingsContext";
+import apiService from "../services/api.js";
+
+const NEWS_TIME_RANGES = [
+  { key: "1h", label: "Last Hour" },
+  { key: "24h", label: "24 Hours" },
+  { key: "7d", label: "1 Week" },
+  { key: "30d", label: "30 Days" }
+];
 
 const Dashboard = () => {
-  const apiService = useApiService();
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [lastUpdated, setLastUpdated] = useState({
-    crypto: null,
-    stocks: null,
-    weather: null,
-    news: null,
-    exchange: null,
-  });
-  const [error, setError] = useState({
-    crypto: null,
-    stocks: null,
-    weather: null,
-    news: null,
-    exchange: null,
-  });
-  const intervalRef = useRef(null);
+  const [cryptoData, setCryptoData] = useState([]);
+  const [stockData, setStockData] = useState([]);
+  const [newsData, setNewsData] = useState([]);
+  const [exchangeRates, setExchangeRates] = useState(null);
+  const [newsTimeRange, setNewsTimeRange] = useState("24h");
 
-  const fetchAll = async () => {
-    const now = new Date();
-    const [crypto, stocks, weather, news, exchange] = await Promise.all([
-      apiService.getCryptoPrices().catch(() => { setError(e => ({ ...e, crypto: true })); return null; }),
-      apiService.getStockPrice('AAPL').catch(() => { setError(e => ({ ...e, stocks: true })); return null; }),
-      apiService.getWeather('New York').catch(() => { setError(e => ({ ...e, weather: true })); return null; }),
-      apiService.getNews().catch(() => { setError(e => ({ ...e, news: true })); return null; }),
-      apiService.getExchangeRates().catch(() => { setError(e => ({ ...e, exchange: true })); return null; }),
-    ]);
-    setLastUpdated(lu => ({
-      crypto: crypto ? now : lu.crypto,
-      stocks: stocks ? now : lu.stocks,
-      weather: weather ? now : lu.weather,
-      news: news ? now : lu.news,
-      exchange: exchange ? now : lu.exchange,
-    }));
-    setError({ crypto: !crypto, stocks: !stocks, weather: !weather, news: !news, exchange: !exchange });
+  const [loading, setLoading] = useState(true);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const { showError } = useErrorToast();
+  const { settings } = useSettings();
+
+  // Fetch data from APIs
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Fetch crypto data - convert object to array format
+      const cryptoResponse = await apiService.getCryptoPrices();
+      if (Array.isArray(cryptoResponse)) {
+        const cryptoArray = cryptoResponse
+          .filter(crypto => settings.crypto.symbols.includes(crypto.symbol))
+          .map(crypto => ({
+            symbol: crypto.symbol,
+            title: crypto.name || crypto.symbol,
+            price: crypto.price,
+            change: Math.random() * 10 - 5, // Mock change for now
+            type: 'crypto'
+          }));
+        setCryptoData(cryptoArray);
+      } else {
+        setCryptoData([]);
+      }
+
+      // Fetch stock data for configured symbols
+      const stockSymbols = settings.stocks.symbols.slice(0, 8); // Limit to 8 symbols
+      const stockPromises = stockSymbols.map(symbol => 
+        apiService.getStockPrice(symbol).catch(err => {
+          console.error(`Failed to fetch ${symbol}:`, err);
+          return null;
+        })
+      );
+      
+      const stockResponses = await Promise.all(stockPromises);
+      const stockArray = stockResponses
+        .filter(response => response && response.price)
+        .map(response => ({
+          symbol: response.symbol,
+          title: response.symbol,
+          price: response.price,
+          change: Math.random() * 10 - 5, // Mock change for now
+          type: 'stock'
+        }));
+      setStockData(stockArray);
+
+      // Fetch exchange rates
+      const rates = await apiService.getExchangeRates();
+      setExchangeRates(rates);
+
+      setLastUpdated(new Date());
+    } catch (error) {
+      console.error("Dashboard fetch error:", error);
+      if (typeof showError === 'function') showError("Failed to fetch dashboard data");
+      // Fallback to empty arrays for critical data
+      setCryptoData([]);
+      setStockData([]);
+      setExchangeRates(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Fetch news for selected time range
+  const fetchNews = async (timeRange) => {
+    setNewsLoading(true);
+    try {
+      const url = `/news/?time_range=${timeRange}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      setNewsData(Array.isArray(data) ? data.slice(0, 20) : []);
+    } catch {
+      setNewsData([]);
+      if (typeof showError === 'function') showError("Failed to fetch news");
+    } finally {
+      setNewsLoading(false);
+    }
+  };
+
+  // Handle refresh
+  const handleRefresh = async () => {
+    await fetchData();
+    await fetchNews(newsTimeRange);
+  };
+
+  // Initialize data
   useEffect(() => {
-    fetchAll();
-    intervalRef.current = setInterval(fetchAll, 60000);
-    return () => clearInterval(intervalRef.current);
-  }, []);
+    fetchData();
+  }, []); // Only fetch on mount
 
-  const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
-    fetchAll();
+  // Fetch news when time range changes
+  useEffect(() => {
+    fetchNews(newsTimeRange);
+  }, [newsTimeRange]);
+
+  // Re-fetch when stock or crypto symbols change
+  useEffect(() => {
+    if (lastUpdated) {
+      fetchData();
+      fetchNews(newsTimeRange);
+    }
+  }, [settings.stocks.symbols, settings.crypto.symbols]);
+
+  // Auto-refresh based on settings
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchData();
+      fetchNews(newsTimeRange);
+    }, Math.min(settings.stocks.refreshInterval, settings.crypto.refreshInterval) * 1000);
+
+    return () => clearInterval(interval);
+  }, [settings.stocks.refreshInterval, settings.crypto.refreshInterval, newsTimeRange]);
+
+  // Format last updated time
+  const formatLastUpdated = () => {
+    if (!lastUpdated) return "Never";
+    const now = new Date();
+    const diff = Math.floor((now - lastUpdated) / 1000);
+    
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    return `${Math.floor(diff / 3600)}h ago`;
   };
 
-  const formatLastUpdated = (date) => {
-    if (!date) return null;
-    const diff = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-    return `${Math.floor(diff / 3600)} hr ago`;
+  const safeCryptoData = Array.isArray(cryptoData) ? cryptoData : [];
+  const safeStockData = Array.isArray(stockData) ? stockData : [];
+  const safeNewsData = Array.isArray(newsData) ? newsData : [];
+
+  // Function to shuffle array
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
   };
+
+  // Combine all cards and shuffle them
+  const allCards = [
+    // Crypto cards
+    ...safeCryptoData.map((crypto, i) => ({
+      ...(crypto || { title: 'Crypto', price: '', change: '', symbol: '', type: 'crypto' }),
+      loading: !crypto,
+      key: `crypto-${crypto?.symbol || i}`,
+      component: 'BentoCard'
+    })),
+    // Stock cards
+    ...(safeStockData.length > 0 ? safeStockData : Array(4).fill(null)).map((stock, i) => ({
+      ...(stock || { title: 'Stock', price: '', change: '', symbol: '', type: 'stock' }),
+      loading: !stock,
+      key: `stock-${i}`,
+      component: 'BentoCard'
+    })),
+    // Weather card
+    { key: 'weather', component: 'WeatherCard' },
+    // Exchange rate card
+    { key: 'exchange-rate', component: 'ExchangeRateCard', rates: exchangeRates, loading }
+  ];
+
+  // Use state to store shuffled cards so they persist during re-renders
+  const [shuffledCards, setShuffledCards] = useState([]);
+
+  // Shuffle cards when data changes
+  useEffect(() => {
+    if (allCards.length > 0) {
+      setShuffledCards(shuffleArray(allCards));
+    }
+  }, [safeCryptoData, safeStockData, exchangeRates, loading]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex justify-between items-start">
+    <div className="p-8">
+      {/* Header */}
+      <div className="max-w-screen-2xl mx-auto mb-10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white transition-colors mb-2">
               DataPulse Dashboard
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Welcome to your data analytics dashboard
+            <p className="text-lg text-gray-600 dark:text-gray-100 mt-1 transition-colors">
+              All your information in one place at one time
             </p>
           </div>
-          <RefreshButton onRefresh={handleRefresh} />
+          <div className="flex items-center gap-6">
+            <div className="text-base text-gray-500 dark:text-gray-100 transition-colors">
+              Last updated: {formatLastUpdated()}
+            </div>
+            <Button
+              color="primary"
+              variant="solid"
+              onClick={handleRefresh}
+              disabled={loading || newsLoading}
+              className="font-medium px-6 py-2 text-lg"
+            >
+              {(loading || newsLoading) ? "Refreshing..." : "Refresh"}
+            </Button>
+          </div>
         </div>
-        {/* Chart Section */}
-        <div className="mb-8">
-          <ChartComponent key={`chart-${refreshKey}`} symbol="BTC" initialPeriod="1h" />
-          {error.crypto && lastUpdated.crypto && (
-            <div className="text-xs text-gray-500 mt-1" data-testid="last-updated-crypto">Last updated {formatLastUpdated(lastUpdated.crypto)}</div>
+      </div>
+
+      {/* Main Dashboard Grid */}
+      <div className="max-w-screen-2xl mx-auto mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-[minmax(150px,auto)] gap-8">
+          {shuffledCards.map((card) => {
+            if (card.component === 'BentoCard') {
+              return (
+                <BentoCard
+                  key={card.key}
+                  title={card.title}
+                  symbol={card.symbol}
+                  price={card.price}
+                  change={card.change}
+                  type={card.type}
+                  loading={card.loading}
+                />
+              );
+            } else if (card.component === 'WeatherCard') {
+              return <WeatherCard key={card.key} />;
+            } else if (card.component === 'ExchangeRateCard') {
+              return <ExchangeRateCard key={card.key} rates={card.rates} loading={card.loading} />;
+            }
+            return null;
+          })}
+        </div>
+      </div>
+
+      {/* News Section */}
+      <div className="max-w-screen-2xl mx-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Top News</h2>
+          <Select
+            label="Time Range"
+            value={newsTimeRange}
+            onChange={e => setNewsTimeRange(e.target.value)}
+            className="w-48"
+          >
+            {NEWS_TIME_RANGES.map(range => (
+              <SelectItem key={range.key} value={range.key}>
+                {range.label}
+              </SelectItem>
+            ))}
+          </Select>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-[minmax(150px,auto)] gap-6">
+          {newsLoading ? (
+            <div className="col-span-full text-center py-10">
+              <span className="text-lg text-gray-500 dark:text-gray-400">Loading news...</span>
+            </div>
+          ) : safeNewsData.length === 0 ? (
+            <div className="col-span-full text-center py-10">
+              <span className="text-lg text-gray-500 dark:text-gray-400">No news found for this time range.</span>
+            </div>
+          ) : (
+            safeNewsData.map((news, i) => (
+              <NewsCard
+                key={`news-${i}`}
+                title={news.title}
+                source={news.source}
+                image={news.image}
+                publishedAt={news.publishedAt}
+                url={news.url}
+                loading={newsLoading}
+              />
+            ))
           )}
-        </div>
-        {/* News Section */}
-        <div className="mb-8">
-          <Card className="w-full">
-            <CardBody>
-              <NewsFeed key={`news-${refreshKey}`} />
-              {error.news && lastUpdated.news && (
-                <div className="text-xs text-gray-500 mt-1" data-testid="last-updated-news">Last updated {formatLastUpdated(lastUpdated.news)}</div>
-              )}
-            </CardBody>
-          </Card>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Stock Market Card */}
-          <Card className="w-full">
-            <CardHeader className="flex gap-3">
-              <div className="flex flex-col">
-                <p className="text-md">Stock Market</p>
-                <p className="text-small text-default-500">Real-time stock prices</p>
-              </div>
-            </CardHeader>
-            <CardBody>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Get live stock prices and market data
-              </p>
-              {error.stocks && lastUpdated.stocks && (
-                <div className="text-xs text-gray-500 mt-1" data-testid="last-updated-stocks">Last updated {formatLastUpdated(lastUpdated.stocks)}</div>
-              )}
-              <Button color="primary" size="sm">
-                View Stocks
-              </Button>
-            </CardBody>
-          </Card>
-          {/* Crypto Card */}
-          <Card className="w-full">
-            <CardHeader className="flex gap-3">
-              <div className="flex flex-col">
-                <p className="text-md">Cryptocurrency</p>
-                <p className="text-small text-default-500">Crypto market data</p>
-              </div>
-            </CardHeader>
-            <CardBody>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Track cryptocurrency prices and trends
-              </p>
-              {error.crypto && lastUpdated.crypto && (
-                <div className="text-xs text-gray-500 mt-1" data-testid="last-updated-crypto">Last updated {formatLastUpdated(lastUpdated.crypto)}</div>
-              )}
-              <Button color="secondary" size="sm">
-                View Crypto
-              </Button>
-            </CardBody>
-          </Card>
-          {/* Weather Card */}
-          <Card className="w-full">
-            <CardHeader className="flex gap-3">
-              <div className="flex flex-col">
-                <p className="text-md">Weather</p>
-                <p className="text-small text-default-500">Weather information</p>
-              </div>
-            </CardHeader>
-            <CardBody>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Check weather conditions worldwide
-              </p>
-              {error.weather && lastUpdated.weather && (
-                <div className="text-xs text-gray-500 mt-1" data-testid="last-updated-weather">Last updated {formatLastUpdated(lastUpdated.weather)}</div>
-              )}
-              <Button color="success" size="sm">
-                View Weather
-              </Button>
-            </CardBody>
-          </Card>
-          {/* News Card */}
-          <Card className="w-full">
-            <CardHeader className="flex gap-3">
-              <div className="flex flex-col">
-                <p className="text-md">News</p>
-                <p className="text-small text-default-500">Latest headlines</p>
-              </div>
-            </CardHeader>
-            <CardBody>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Stay updated with top news stories
-              </p>
-              {error.news && lastUpdated.news && (
-                <div className="text-xs text-gray-500 mt-1" data-testid="last-updated-news">Last updated {formatLastUpdated(lastUpdated.news)}</div>
-              )}
-              <Button color="warning" size="sm">
-                View News
-              </Button>
-            </CardBody>
-          </Card>
-          {/* Exchange Rates Card */}
-          <Card className="w-full">
-            <CardHeader className="flex gap-3">
-              <div className="flex flex-col">
-                <p className="text-md">Exchange Rates</p>
-                <p className="text-small text-default-500">Currency conversion</p>
-              </div>
-            </CardHeader>
-            <CardBody>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Real-time currency exchange rates
-              </p>
-              {error.exchange && lastUpdated.exchange && (
-                <div className="text-xs text-gray-500 mt-1" data-testid="last-updated-exchange">Last updated {formatLastUpdated(lastUpdated.exchange)}</div>
-              )}
-              <Button color="danger" size="sm">
-                View Rates
-              </Button>
-            </CardBody>
-          </Card>
-          {/* System Status Card */}
-          <Card className="w-full">
-            <CardHeader className="flex gap-3">
-              <div className="flex flex-col">
-                <p className="text-md">System Status</p>
-                <p className="text-small text-default-500">Service health</p>
-              </div>
-            </CardHeader>
-            <CardBody>
-              <div className="flex items-center gap-2 mb-4">
-                <Chip color="success" size="sm">All Systems Operational</Chip>
-              </div>
-              <Button color="default" size="sm">
-                Check Status
-              </Button>
-            </CardBody>
-          </Card>
         </div>
       </div>
     </div>

@@ -24,13 +24,16 @@ class TestCryptoService:
     async def test_get_crypto_prices_from_cache(self, crypto_service, mock_redis):
         """Test returning cached prices"""
         # Mock cached data
-        cached_prices = {"BTC": 50000.0, "ETH": 3000.0}
+        cached_prices = [
+            {"symbol": "BTC", "name": "Bitcoin", "price": 50000.0},
+            {"symbol": "ETH", "name": "Ethereum", "price": 3000.0}
+        ]
         mock_redis.get.return_value = json.dumps(cached_prices)
 
-        result = await crypto_service.get_crypto_prices()
+        result = await crypto_service.get_crypto_prices(top_n=2)
 
         assert result == cached_prices
-        mock_redis.get.assert_called_once_with("crypto_prices")
+        mock_redis.get.assert_called_once_with("crypto_prices:2")
 
     @pytest.mark.asyncio
     async def test_get_crypto_prices_from_api(self, crypto_service, mock_redis):
@@ -39,10 +42,10 @@ class TestCryptoService:
         mock_redis.get.return_value = None
 
         # Mock API response
-        api_response = {
-            "bitcoin": {"usd": 50000.0},
-            "ethereum": {"usd": 3000.0}
-        }
+        api_response = [
+            {"symbol": "btc", "name": "Bitcoin", "current_price": 50000.0},
+            {"symbol": "eth", "name": "Ethereum", "current_price": 3000.0}
+        ]
 
         with patch('httpx.AsyncClient') as mock_client:
             mock_response = MagicMock()
@@ -55,15 +58,18 @@ class TestCryptoService:
             mock_client_instance.get.return_value = mock_response
             mock_client.return_value = mock_client_instance
 
-            result = await crypto_service.get_crypto_prices()
+            result = await crypto_service.get_crypto_prices(top_n=2)
 
-            expected = {"BTC": 50000.0, "ETH": 3000.0}
+            expected = [
+                {"symbol": "BTC", "name": "Bitcoin", "price": 50000.0},
+                {"symbol": "ETH", "name": "Ethereum", "price": 3000.0}
+            ]
             assert result == expected
 
             # Verify cache was set
             mock_redis.setex.assert_called_once()
             call_args = mock_redis.setex.call_args
-            assert call_args[0][0] == "crypto_prices"  # key
+            assert call_args[0][0] == "crypto_prices:2"  # key
             assert call_args[0][1] == 60  # ttl
             cached_data = json.loads(call_args[0][2])  # value
             assert cached_data == expected
@@ -84,13 +90,16 @@ class TestCryptoService:
 
             # Should raise exception when no cached data available
             with pytest.raises(Exception, match="API unavailable and no cached data"):
-                await crypto_service.get_crypto_prices()
+                await crypto_service.get_crypto_prices(top_n=2)
 
     @pytest.mark.asyncio
     async def test_get_crypto_prices_fallback_to_stale_cache(self, crypto_service, mock_redis):
         """Test falling back to stale cache when API fails"""
         # Mock stale cached data (first call returns None, second returns data)
-        stale_prices = {"BTC": 50000.0, "ETH": 3000.0}
+        stale_prices = [
+            {"symbol": "BTC", "name": "Bitcoin", "price": 50000.0},
+            {"symbol": "ETH", "name": "Ethereum", "price": 3000.0}
+        ]
         mock_redis.get.side_effect = [None, json.dumps(stale_prices)]
 
         with patch('httpx.AsyncClient') as mock_client:
@@ -101,7 +110,7 @@ class TestCryptoService:
                 "Timeout")
             mock_client.return_value = mock_client_instance
 
-            result = await crypto_service.get_crypto_prices()
+            result = await crypto_service.get_crypto_prices(top_n=2)
 
             assert result == stale_prices
 
@@ -111,8 +120,8 @@ class TestCryptoService:
         # Mock empty cache
         mock_redis.get.return_value = None
 
-        # Mock invalid API response (missing prices)
-        api_response = {"bitcoin": {"usd": 0.0}, "ethereum": {"usd": 3000.0}}
+        # Mock invalid API response (empty list)
+        api_response = []
 
         with patch('httpx.AsyncClient') as mock_client:
             mock_response = MagicMock()
@@ -127,7 +136,7 @@ class TestCryptoService:
 
             # Should raise exception when no cached data available
             with pytest.raises(Exception, match="API unavailable and no cached data"):
-                await crypto_service.get_crypto_prices()
+                await crypto_service.get_crypto_prices(top_n=2)
 
 
 class TestCryptoEndpoint:
@@ -143,19 +152,21 @@ class TestCryptoEndpoint:
         """Test successful crypto endpoint response"""
         # Mock service
         mock_service = AsyncMock()
-        mock_service.get_crypto_prices.return_value = {
-            "BTC": 50000.0, "ETH": 3000.0}
+        mock_service.get_crypto_prices.return_value = [
+            {"symbol": "BTC", "name": "Bitcoin", "price": 50000.0},
+            {"symbol": "ETH", "name": "Ethereum", "price": 3000.0}
+        ]
         mock_crypto_service_class.return_value = mock_service
 
-        response = client.get("/crypto/")
+        response = client.get("/crypto/?top_n=2")
 
         assert response.status_code == 200
         data = response.json()
-        assert data == {"BTC": 50000.0, "ETH": 3000.0}
-        assert "BTC" in data
-        assert "ETH" in data
-        assert isinstance(data["BTC"], float)
-        assert isinstance(data["ETH"], float)
+        assert isinstance(data, list)
+        assert len(data) == 2
+        assert data[0]["symbol"] == "BTC"
+        assert data[0]["name"] == "Bitcoin"
+        assert isinstance(data[0]["price"], (int, float))
 
     @patch('app.routes.crypto.CryptoService')
     def test_crypto_endpoint_service_error(self, mock_crypto_service_class, client):
@@ -165,7 +176,7 @@ class TestCryptoEndpoint:
         mock_service.get_crypto_prices.side_effect = Exception("Service error")
         mock_crypto_service_class.return_value = mock_service
 
-        response = client.get("/crypto/")
+        response = client.get("/crypto/?top_n=2")
 
         assert response.status_code == 503
         data = response.json()
@@ -187,17 +198,17 @@ async def test_crypto_service_cache_operations():
     service = CryptoService(mock_redis)
     prices = {"BTC": 50000.0, "ETH": 3000.0}
 
-    await service._cache_prices(prices)
+    await service._cache_prices(prices, top_n=2)
 
     # Verify setex was called with correct parameters
     mock_redis.setex.assert_called_once()
     call_args = mock_redis.setex.call_args
-    assert call_args[0][0] == "crypto_prices"  # key
+    assert call_args[0][0] == "crypto_prices:2"  # key
     assert call_args[0][1] == 60  # ttl
     cached_data = json.loads(call_args[0][2])  # value
     assert cached_data == prices
 
     # Test cache retrieval
     mock_redis.get.return_value = json.dumps(prices)
-    result = await service._get_from_cache()
+    result = await service._get_from_cache(top_n=2)
     assert result == prices
