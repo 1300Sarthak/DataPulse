@@ -42,12 +42,12 @@ export const useApiService = () => {
       const response = await fetchWithTimeout(`${API_BASE_URL}/stocks/?symbol=${symbol}`, {}, 10000, errorToast);
       return response.json();
     },
-    async getCryptoPrices() {
-      const response = await fetchWithTimeout(`${API_BASE_URL}/crypto/`, {}, 10000, errorToast);
+    async getCryptoPrices(topN = 50) {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/crypto/?top_n=${topN}`, {}, 10000, errorToast);
       return response.json();
     },
-    async getWeather(city) {
-      const response = await fetchWithTimeout(`${API_BASE_URL}/weather/?city=${encodeURIComponent(city)}`, {}, 10000, errorToast);
+    async getWeather(city, unit = 'C') {
+      const response = await fetchWithTimeout(`${API_BASE_URL}/weather/?city=${encodeURIComponent(city)}&unit=${unit}`, {}, 10000, errorToast);
       return response.json();
     },
     async getNews() {
@@ -66,4 +66,41 @@ export const useApiService = () => {
       return response;
     }
   };
-}; 
+};
+
+// Default export for non-hook usage (no error toast)
+const apiService = {
+  async getHealth() {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/health/`);
+    return response.json();
+  },
+  async getStockPrice(symbol) {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/stocks/?symbol=${symbol}`);
+    return response.json();
+  },
+  async getCryptoPrices(topN = 50) {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/crypto/?top_n=${topN}`);
+    return response.json();
+  },
+  async getWeather(city, unit = 'C') {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/weather/?city=${encodeURIComponent(city)}&unit=${unit}`);
+    return response.json();
+  },
+  async getNews() {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/news/`);
+    return response.json();
+  },
+  async getExchangeRates() {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/exchange-rate/`);
+    return response.json();
+  },
+  async refresh() {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return response;
+  }
+};
+
+export default apiService; 

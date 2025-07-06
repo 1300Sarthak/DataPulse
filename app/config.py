@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     openweather_api_key: Optional[str] = None
     gnews_api_key: Optional[str] = None
     supabase_key: Optional[str] = None
+    # For Vite environment variables
+    vite_openweather_api_key: Optional[str] = None
 
     # Supabase Configuration
     supabase_url: str
@@ -45,7 +47,7 @@ class Settings(BaseSettings):
         # Extract project reference from the host
         project_ref = supabase_host.split(".")[0]
 
-        return f"postgresql+asyncpg://postgres:{self.supabase_db_password}@db.{project_ref}.supabase.co:5432/postgres"
+        return f"postgresql://postgres:{self.supabase_db_password}@db.{project_ref}.supabase.co:5432/postgres"
 
 
 settings = Settings()

@@ -191,7 +191,7 @@ class TestWeatherRedisIntegration:
 
                 # Verify cache key format
                 args, kwargs = mock_redis.setex.call_args
-                assert args[0] == "weather:San Francisco"
+                assert args[0] == "weather:San Francisco:metric"
 
 
 class TestWeatherDatabaseLogging:

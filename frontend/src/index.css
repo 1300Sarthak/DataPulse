@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .animate-spin-slow {
+    animation: spin 2s linear infinite;
+  }
+  .card-dark {
+    @apply bg-gray-800/80 text-gray-100 shadow-lg;
+  }
+  .card-light {
+    @apply bg-white text-gray-900 shadow;
+  }
+  .text-secondary-dark {
+    @apply text-gray-400;
+  }
+  .text-accent-dark {
+    @apply text-blue-400;
+  }
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -13,7 +31,9 @@
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+  @apply transition-colors duration-500;
+}
+
+html.dark {
+  background-color: #101624;
 }

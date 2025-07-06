@@ -17,6 +17,7 @@ router = APIRouter(prefix="/weather", tags=["weather"])
 @router.get("/", response_model=WeatherResponse)
 async def get_weather(
     city: str = Query(..., description="City name, e.g. San Francisco"),
+    unit: str = Query("C", description="Temperature unit: C or F"),
     redis_client: redis.Redis = Depends(get_redis)
 ) -> WeatherResponse:
     """
@@ -24,7 +25,7 @@ async def get_weather(
     """
     try:
         service = WeatherService(redis_client)
-        weather = await service.get_weather(city)
+        weather = await service.get_weather(city, unit)
         return WeatherResponse(**weather)
     except ValueError as e:
         if "not found" in str(e).lower():

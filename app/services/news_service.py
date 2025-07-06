@@ -72,7 +72,8 @@ class NewsService:
                         "title": a["title"],
                         "source": a["source"]["name"],
                         "url": a["url"],
-                        "publishedAt": a["publishedAt"]
+                        "publishedAt": a["publishedAt"],
+                        "image": a.get("image")
                     }
                     for a in articles
                 ]

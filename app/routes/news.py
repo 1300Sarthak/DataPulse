@@ -6,11 +6,14 @@ from app.services.news_service import NewsService
 from typing import List
 
 
+from typing import Optional
+
 class NewsHeadline(BaseModel):
     title: str
     source: str
     url: str
     publishedAt: str
+    image: Optional[str] = None
 
 
 router = APIRouter(prefix="/news", tags=["news"])
