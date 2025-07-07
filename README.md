@@ -142,3 +142,5 @@ docker run -p 8000:80 datapulse
 See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
 
 The application is containerized and ready for deployment. The GitHub Actions workflow automatically runs tests on push to the main branch.
+
+needa redeploy ru
