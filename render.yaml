@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: datapulse
+    runtime: docker
+    plan: starter
+    region: oregon
+    healthCheckPath: /health/
+    envVars:
+      - key: FINNHUB_API_KEY
+        sync: false
+      - key: OPENWEATHER_API_KEY
+        sync: false
+      - key: GNEWS_API_KEY
+        sync: false
+      - key: EXCHANGE_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: REDIS_URL
+        value: redis://localhost:6379
+      - key: DATABASE_URL
+        value: postgresql://datapulse:datapulse_password@localhost:5432/datapulse
+    buildCommand: docker build -t datapulse .
+    startCommand: docker run -p $PORT:8000 datapulse
+    disk:
+      name: datapulse-disk
+      mountPath: /app/data
+      sizeGB: 1
+
+databases:
+  - name: datapulse-postgres
+    databaseName: datapulse
+    user: datapulse
+    plan: starter
+    region: oregon
+
+  - name: datapulse-redis
+    plan: starter
+    region: oregon 
