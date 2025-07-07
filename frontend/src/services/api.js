@@ -1,6 +1,6 @@
 import { useErrorToast } from '../context/ErrorToastContext';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://datapulse-ztzi.onrender.com/api';
 
 // Helper function to create fetch with timeout
 const fetchWithTimeout = async (url, options = {}, timeout = 10000, errorToast) => {
