@@ -1,12 +1,13 @@
 {
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://datapulse-ztzi.onrender.com/api/$1"
+      "source": "/api/:match*",
+      "destination": "https://datapulse-ztzi.onrender.com/api/:match*"
     },
     {
-      "source": "/((?!api).*)",
+      "source": "/:match*",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "outputDirectory": "dist"
 } 
