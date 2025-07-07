@@ -3,7 +3,7 @@ from pydantic import BaseModel
 import redis.asyncio as redis
 from app.cache import get_redis
 from app.services.stocks_service import StocksService
-from typing import Dict
+from typing import Dict, List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,10 +14,41 @@ class StockPriceResponse(BaseModel):
     price: float
 
 
+class StockListItem(BaseModel):
+    symbol: str
+    name: str
+    price: float
+
+
 router = APIRouter(prefix="/stocks", tags=["stocks"])
 
 
-@router.get("/", response_model=StockPriceResponse)
+@router.get("/list", response_model=List[StockListItem], name="Get top N stocks")
+async def get_top_stocks(
+    top_n: int = Query(
+        10, ge=1, le=25, description="Number of top stocks to return (max 25 for free plan)"),
+    redis_client: redis.Redis = Depends(get_redis)
+) -> List[StockListItem]:
+    """
+    Get a list of top N stocks (symbol, name, price).
+    """
+    try:
+        service = StocksService(redis_client)
+        stocks = await service.get_top_stocks(top_n)
+        return [StockListItem(**stock) for stock in stocks]
+    except Exception as e:
+        if "rate limit" in str(e).lower():
+            raise HTTPException(
+                status_code=429, detail="API rate limit exceeded")
+        elif "not configured" in str(e).lower():
+            raise HTTPException(
+                status_code=500, detail="API configuration error")
+        else:
+            raise HTTPException(
+                status_code=503, detail=f"Unable to fetch top stocks: {e}")
+
+
+@router.get("/price", response_model=StockPriceResponse)
 async def get_stock_price(
     symbol: str = Query(..., description="Stock symbol, e.g. AAPL"),
     redis_client: redis.Redis = Depends(get_redis)

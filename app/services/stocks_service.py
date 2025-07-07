@@ -2,6 +2,7 @@ import httpx
 import redis.asyncio as redis
 import json
 import logging
+import asyncio
 from typing import Optional, Dict
 from app.config import settings
 
@@ -199,62 +200,106 @@ class StocksService:
         prices = []
         current_price = base_price
 
-        # Generate data points based on period
-        # Max 100 points, 1 per hour minimum
-        num_points = min(100, periods[period] // 3600)
-
+        # Generate data points
+        num_points = 100
         for i in range(num_points):
-            timestamp = from_timestamp + (i * periods[period] // num_points)
-
             # Add some random variation
-            variation = random.uniform(-0.03, 0.03)  # ±3% variation
-            current_price = current_price * (1 + variation)
+            change = random.uniform(-0.02, 0.02)  # ±2% change
+            current_price = current_price * (1 + change)
+
+            # Ensure price doesn't go negative
+            current_price = max(current_price, base_price * 0.5)
+
+            timestamp = from_timestamp + (i * periods[period] // num_points)
 
             prices.append({
                 "timestamp": timestamp * 1000,  # Convert to milliseconds
-                "open": round(current_price * 0.99, 2),
-                "high": round(current_price * 1.02, 2),
-                "low": round(current_price * 0.98, 2),
-                "close": round(current_price, 2),
+                "open": current_price,
+                "high": current_price * random.uniform(1.0, 1.05),
+                "low": current_price * random.uniform(0.95, 1.0),
+                "close": current_price,
                 "volume": random.randint(1000000, 10000000)
             })
 
-        logger.info(f"Generated mock historical data for {symbol} ({period})")
-        return {"prices": prices}
+        return {
+            "symbol": symbol.upper(),
+            "period": period,
+            "prices": prices
+        }
 
     async def get_stock_historical_data_by_period(self, symbol: str, period: str = "1D") -> Optional[Dict]:
-        """Get historical data for common time periods"""
-        import time
+        """Get historical data using period string instead of timestamps"""
+        # For now, use mock data to avoid rate limiting issues
+        # In production, you could implement proper rate limiting and caching
+        return await self.get_mock_historical_data(symbol, period)
 
-        current_time = int(time.time())
+    async def get_top_stocks(self, top_n: int = 25) -> list:
+        """Fetch top N stocks by market cap (or a static list if Finnhub doesn't provide)."""
+        # For demo: Use a static list of top US stocks (S&P 500 leaders)
+        top_symbols = [
+            'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'META', 'TSLA', 'BRK.A', 'JPM', 'V',
+            'UNH', 'HD', 'PG', 'DIS', 'MA', 'BAC', 'XOM', 'PFE', 'KO', 'NFLX',
+            'PEP', 'CSCO', 'ABT', 'TMO', 'AVGO', 'COST', 'WMT', 'CVX', 'MCD', 'DHR',
+            'LLY', 'ACN', 'LIN', 'MRK', 'CRM', 'INTC', 'TXN', 'NEE', 'NKE', 'MDT',
+            'HON', 'UNP', 'AMGN', 'QCOM', 'LOW', 'MS', 'SBUX', 'IBM', 'AMD', 'GS',
+            'CAT', 'DE', 'RTX', 'SPGI', 'T', 'VZ', 'CMCSA', 'ADBE', 'PM', 'UPS'
+        ][:top_n]
 
-        # Define time periods in seconds
-        periods = {
-            "1H": 60 * 60,  # 1 hour
-            "1D": 24 * 60 * 60,  # 1 day
-            "1W": 7 * 24 * 60 * 60,  # 1 week
-            "1M": 30 * 24 * 60 * 60,  # 1 month
-            "3M": 90 * 24 * 60 * 60,  # 3 months
-            "1Y": 365 * 24 * 60 * 60,  # 1 year
-            "5Y": 5 * 365 * 24 * 60 * 60,  # 5 years
+        results = []
+
+        # For now, use mock data to avoid rate limiting issues
+        # In production, you could implement proper rate limiting and caching
+        for symbol in top_symbols:
+            mock_price = self._get_mock_price(symbol)
+            results.append({
+                'symbol': symbol,
+                'name': symbol,
+                'price': mock_price
+            })
+
+        logger.info(f"Generated mock data for {len(results)} stocks")
+        return results
+
+    async def _fetch_stock_with_fallback(self, symbol: str) -> dict:
+        """Fetch stock price with fallback to mock data if API fails"""
+        try:
+            price = await self.get_stock_price(symbol)
+            return {
+                'symbol': symbol,
+                'name': symbol,
+                'price': price
+            }
+        except Exception as e:
+            logger.warning(f"API failed for {symbol}, using mock data: {e}")
+            # Fallback to mock price
+            mock_price = self._get_mock_price(symbol)
+            return {
+                'symbol': symbol,
+                'name': symbol,
+                'price': mock_price
+            }
+
+    def _get_mock_price(self, symbol: str) -> float:
+        """Generate a realistic mock price for a stock"""
+        import random
+
+        # Base prices for common stocks
+        base_prices = {
+            'AAPL': 200, 'MSFT': 400, 'GOOGL': 150, 'AMZN': 180, 'NVDA': 500,
+            'META': 300, 'TSLA': 250, 'BRK.A': 500000, 'JPM': 150, 'V': 250,
+            'UNH': 500, 'HD': 350, 'PG': 150, 'DIS': 100, 'MA': 400,
+            'BAC': 30, 'XOM': 100, 'PFE': 30, 'KO': 60, 'NFLX': 500,
+            'PEP': 180, 'CSCO': 50, 'ABT': 100, 'TMO': 500, 'AVGO': 600,
+            'COST': 800, 'WMT': 60, 'CVX': 150, 'MCD': 300, 'DHR': 250,
+            'LLY': 700, 'ACN': 300, 'LIN': 400, 'MRK': 100, 'CRM': 250,
+            'INTC': 40, 'TXN': 150, 'NEE': 60, 'NKE': 100, 'MDT': 80,
+            'HON': 200, 'UNP': 250, 'AMGN': 300, 'QCOM': 120, 'LOW': 200,
+            'MS': 100, 'SBUX': 100, 'IBM': 150, 'AMD': 120, 'GS': 350,
+            'CAT': 250, 'DE': 400, 'RTX': 100, 'SPGI': 400, 'T': 20,
+            'VZ': 40, 'CMCSA': 40, 'ADBE': 500, 'PM': 100, 'UPS': 150
         }
 
-        if period not in periods:
-            raise ValueError(
-                f"Invalid period: {period}. Available: {list(periods.keys())}")
-
-        # Set resolution based on period
-        resolutions = {
-            "1H": "1",  # 1 minute
-            "1D": "5",  # 5 minutes
-            "1W": "30",  # 30 minutes
-            "1M": "D",  # Daily
-            "3M": "D",  # Daily
-            "1Y": "D",  # Daily
-            "5Y": "D",  # Daily
-        }
-
-        from_timestamp = current_time - periods[period]
-        resolution = resolutions[period]
-
-        return await self.get_stock_historical_data(symbol, resolution, from_timestamp, current_time)
+        base_price = base_prices.get(symbol, 100)
+        # Add some random variation (±10%)
+        variation = random.uniform(0.9, 1.1)
+        return round(base_price * variation, 2)
