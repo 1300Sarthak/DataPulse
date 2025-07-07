@@ -1,7 +1,6 @@
 import { useErrorToast } from '../context/ErrorToastContext';
 
-// Use Vercel proxy for API calls - no environment variable needed
-const API_BASE_URL = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // Helper function to create fetch with timeout
 const fetchWithTimeout = async (url, options = {}, timeout = 10000, errorToast) => {
