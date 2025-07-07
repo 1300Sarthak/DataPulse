@@ -14,7 +14,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useErrorToast } from "../context/ErrorToastContext";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 const NewsPage = () => {
   const [newsData, setNewsData] = useState({});
