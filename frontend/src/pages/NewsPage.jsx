@@ -125,7 +125,7 @@ const NewsPage = () => {
           <div className="text-center py-20">
             <Spinner size="lg" />
             <p className="mt-4 text-gray-600 dark:text-gray-400">Loading latest news...</p>
-            <p className="text-sm text-gray-500">API URL: {API_BASE_URL}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">API URL: {API_BASE_URL}</p>
           </div>
         </div>
       </div>
@@ -145,7 +145,7 @@ const NewsPage = () => {
           <p className="text-lg text-gray-600 dark:text-gray-400">
             Top stories from the last 24 hours across all categories
           </p>
-          <p className="text-sm text-gray-500">API URL: {API_BASE_URL}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">API URL: {API_BASE_URL}</p>
           
           {/* API Rate Limit Notice */}
           {Object.values(newsData).every(articles => articles.length === 0) && (

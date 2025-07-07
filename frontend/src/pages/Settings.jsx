@@ -213,7 +213,7 @@ const Settings = () => {
                   className="w-full"
                   aria-label="Stock symbols separated by commas"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Enter stock symbols separated by commas (max 8 symbols)
                 </p>
               </div>
@@ -234,7 +234,7 @@ const Settings = () => {
                   className="w-full"
                   aria-label="Stock refresh interval in seconds"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Current: {localSettings.stocks.refreshInterval} seconds
                 </p>
               </div>
@@ -257,10 +257,10 @@ const Settings = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Temperature Unit
                   </label>
-                  <p className="text-xs text-gray-500">Choose between Celsius and Fahrenheit</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Choose between Celsius and Fahrenheit</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-sm ${localSettings.weather.unit === 'C' ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                  <span className={`text-sm ${localSettings.weather.unit === 'C' ? 'text-blue-600 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
                     °C
                   </span>
                   <Switch
@@ -275,7 +275,7 @@ const Settings = () => {
                       thumb: "group-data-[selected=true]:bg-white"
                     }}
                   />
-                  <span className={`text-sm ${localSettings.weather.unit === 'F' ? 'text-blue-600 font-medium' : 'text-gray-500'}`}>
+                  <span className={`text-sm ${localSettings.weather.unit === 'F' ? 'text-blue-600 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
                     °F
                   </span>
                 </div>
@@ -303,7 +303,7 @@ const Settings = () => {
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Use Current Location
                   </label>
-                  <p className="text-xs text-gray-500">Automatically detect your location</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Automatically detect your location</p>
                 </div>
                 <Switch
                   isSelected={localSettings.weather.autoLocation}
@@ -442,7 +442,7 @@ const Settings = () => {
                   className="w-full"
                   aria-label="Country codes separated by commas"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Enter ISO country codes (e.g., us, gb, ca, au, de, fr)
                 </p>
               </div>
@@ -463,7 +463,7 @@ const Settings = () => {
                   className="w-full"
                   aria-label="Maximum news articles to display"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Show {localSettings.news.maxArticles} article{localSettings.news.maxArticles !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -494,7 +494,7 @@ const Settings = () => {
                   className="w-full"
                   aria-label="Cryptocurrency symbols separated by commas"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Enter cryptocurrency symbols separated by commas (max 6 symbols)
                 </p>
               </div>
@@ -515,7 +515,7 @@ const Settings = () => {
                   className="w-full"
                   aria-label="Cryptocurrency refresh interval in seconds"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Current: {localSettings.crypto.refreshInterval} seconds
                 </p>
               </div>

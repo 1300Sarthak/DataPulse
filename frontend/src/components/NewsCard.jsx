@@ -80,7 +80,7 @@ const NewsCard = ({
               <h4 className="font-medium text-gray-900 dark:text-white text-sm line-clamp-2 mb-2">
                 {title}
               </h4>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 {formatTime(publishedAt)}
               </div>
             </div>

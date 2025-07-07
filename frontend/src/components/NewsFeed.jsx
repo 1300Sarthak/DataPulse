@@ -109,7 +109,7 @@ const NewsFeed = () => {
     <div className="w-full">
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Latest News</h3>
-        <p className="text-sm text-gray-500">Top headlines from around the world</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Top headlines from around the world</p>
       </div>
 
       {loading ? (
@@ -134,7 +134,7 @@ const NewsFeed = () => {
                 <h4 className="font-medium text-gray-900 dark:text-white text-sm line-clamp-2">
                   {item.title}
                 </h4>
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                   <span className="font-medium">{item.source}</span>
                   <span>{formatTime(item.publishedAt)}</span>
                 </div>
