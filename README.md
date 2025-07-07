@@ -108,4 +108,37 @@ The application uses:
 
 ## Deployment
 
+### Quick Deploy to Render
+
+The application is ready for deployment on Render with a single click:
+
+1. **Fork this repository** to your GitHub account
+2. **Sign up for Render** at [render.com](https://render.com)
+3. **Create a new Web Service** and connect your forked repository
+4. **Set environment variables** (see DEPLOYMENT.md for details)
+5. **Deploy!**
+
+### Manual Deployment
+
+```bash
+# Build the production image
+./build.sh
+
+# Test locally
+docker run -p 8000:80 datapulse
+
+# Deploy to your preferred platform
+```
+
+### Environment Variables Required
+
+- `FINNHUB_API_KEY` - For stocks data
+- `OPENWEATHER_API_KEY` - For weather data
+- `GNEWS_API_KEY` - For news data
+- `EXCHANGE_API_KEY` - For currency data
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_KEY` - Your Supabase anon key
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.
+
 The application is containerized and ready for deployment. The GitHub Actions workflow automatically runs tests on push to the main branch.

@@ -41,14 +41,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(health.router)
-app.include_router(crypto.router)
-app.include_router(stocks.router)
-app.include_router(weather.router)
-app.include_router(news.router)
-app.include_router(exchange_rate.router)
-app.include_router(refresh.router)
+# Include routers with /api prefix
+app.include_router(health.router, prefix="/api")
+app.include_router(crypto.router, prefix="/api")
+app.include_router(stocks.router, prefix="/api")
+app.include_router(weather.router, prefix="/api")
+app.include_router(news.router, prefix="/api")
+app.include_router(exchange_rate.router, prefix="/api")
+app.include_router(refresh.router, prefix="/api")
 
 
 @app.get("/")
