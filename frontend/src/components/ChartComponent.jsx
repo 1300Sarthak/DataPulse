@@ -107,7 +107,7 @@ const ChartComponent = ({ symbol = "BTC", initialPeriod = "1h" }) => {
       <CardHeader className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold">{symbol} Price History</h3>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {period === "1h" ? "Last hour" : period === "24h" ? "Last 24 hours" : "Last 7 days"}
           </p>
         </div>
@@ -127,7 +127,7 @@ const ChartComponent = ({ symbol = "BTC", initialPeriod = "1h" }) => {
       <CardBody>
         {loading ? (
           <div className="h-64 flex items-center justify-center">
-            <div className="text-gray-500">Loading chart...</div>
+            <div className="text-gray-500 dark:text-gray-400">Loading chart...</div>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={300}>

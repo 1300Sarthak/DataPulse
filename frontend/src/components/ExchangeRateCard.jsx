@@ -14,9 +14,9 @@ const ExchangeRateCard = ({
 
   const getChangeColor = (change) => {
     if (typeof change === "number") {
-      return change > 0 ? "text-green-600" : change < 0 ? "text-red-600" : "text-gray-600";
+      return change > 0 ? "text-green-600" : change < 0 ? "text-red-600" : "text-gray-600 dark:text-gray-400";
     }
-    return "text-gray-600";
+    return "text-gray-600 dark:text-gray-400";
   };
 
   const getChangeIcon = (change) => {
@@ -106,7 +106,7 @@ const ExchangeRateCard = ({
 
             {/* Mini chart placeholder */}
             <div className="mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-              <div className="flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                 <span>24h Change</span>
                 <span className="text-green-600">+0.15%</span>
               </div>

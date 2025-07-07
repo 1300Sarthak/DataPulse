@@ -47,9 +47,9 @@ const BentoCard = ({
   // Get change color
   const getChangeColor = () => {
     if (typeof change === "number") {
-      return change > 0 ? "text-green-600" : change < 0 ? "text-red-600" : "text-gray-600";
+      return change > 0 ? "text-green-600" : change < 0 ? "text-red-600" : "text-gray-600 dark:text-gray-400";
     }
-    return "text-gray-600";
+    return "text-gray-600 dark:text-gray-400";
   };
 
   // Get change icon
@@ -128,7 +128,7 @@ const BentoCard = ({
                 <h3 className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-2 mb-2">
                   {title}
                 </h3>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
                   {new Date().toLocaleTimeString()}
                 </div>
               </div>

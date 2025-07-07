@@ -152,7 +152,7 @@ const ExpandableModal = ({
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {data?.title} ({data?.symbol})
               </h2>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 {data?.type === "crypto" ? "Cryptocurrency" : "Stock"} Price Chart
               </p>
             </div>
@@ -199,7 +199,7 @@ const ExpandableModal = ({
                 {isLoadingChart ? (
                   <div className="flex items-center justify-center h-full">
                     <Spinner size="lg" />
-                    <span className="ml-3 text-gray-500">Loading chart...</span>
+                    <span className="ml-3 text-gray-500 dark:text-gray-400">Loading chart...</span>
                   </div>
                 ) : chartError ? (
                   <div className="flex items-center justify-center h-full">
@@ -248,7 +248,7 @@ const ExpandableModal = ({
                   </ResponsiveContainer>
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-500">No chart data available</p>
+                    <p className="text-gray-500 dark:text-gray-400">No chart data available</p>
                   </div>
                 )}
               </div>
@@ -257,25 +257,25 @@ const ExpandableModal = ({
               {data && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="text-center">
-                    <p className="text-xs text-gray-500">Current Price</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Current Price</p>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       {data.price ? formatPrice(data.price) : "N/A"}
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-gray-500">24h Change</p>
-                    <p className={`text-lg font-semibold ${data.change > 0 ? 'text-green-600' : data.change < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">24h Change</p>
+                    <p className={`text-lg font-semibold ${data.change > 0 ? 'text-green-600' : data.change < 0 ? 'text-red-600' : 'text-gray-600 dark:text-gray-400'}`}>
                       {data.change ? `${data.change > 0 ? '+' : ''}${data.change.toFixed(2)}%` : "N/A"}
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-gray-500">Market Cap</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Market Cap</p>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       $1.2T
                     </p>
                   </div>
                   <div className="text-center">
-                    <p className="text-xs text-gray-500">Volume</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Volume</p>
                     <p className="text-lg font-semibold text-gray-900 dark:text-white">
                       24.5M
                     </p>

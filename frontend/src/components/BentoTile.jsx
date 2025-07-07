@@ -49,9 +49,9 @@ const BentoTile = ({
   // Determine color based on price movement
   const getChangeColor = () => {
     if (typeof change === "number") {
-      return change > 0 ? "text-green-600" : change < 0 ? "text-red-600" : "text-gray-600";
+      return change > 0 ? "text-green-600" : change < 0 ? "text-red-600" : "text-gray-600 dark:text-gray-400";
     }
-    return "text-gray-600";
+    return "text-gray-600 dark:text-gray-400";
   };
 
   // Get change icon
@@ -98,7 +98,7 @@ const BentoTile = ({
               <h3 className="font-semibold text-gray-900 dark:text-white text-sm">
                 {title}
               </h3>
-              <p className="text-xs text-gray-500">{symbol}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{symbol}</p>
             </div>
             <Chip 
               size="sm" 
@@ -123,10 +123,10 @@ const BentoTile = ({
           {/* Additional info for larger tiles */}
           {size === "lg" && (
             <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 Market Cap: $1.2T
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 Volume: 24.5M
               </div>
             </div>

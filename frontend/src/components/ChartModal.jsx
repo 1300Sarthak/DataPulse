@@ -118,7 +118,7 @@ const ChartModal = ({ isOpen, onClose, symbol, type }) => {
   };
 
   const getChangeColor = (change) => {
-    if (change === null || change === undefined) return "text-gray-500";
+    if (change === null || change === undefined) return "text-gray-500 dark:text-gray-400";
     return change >= 0 ? "text-green-600" : "text-red-600";
   };
 
