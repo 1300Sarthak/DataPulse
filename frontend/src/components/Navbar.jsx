@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Navbar, NavbarBrand, Link, Button } from "@heroui/react";
 import { SunIcon, MoonIcon, UserIcon, Cog6ToothIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/react";
+import { useUserVisit } from '../hooks/useUserVisit';
 
 const AppNavbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const { resetVisit } = useUserVisit();
 
   useEffect(() => {
     const savedMode = localStorage.getItem('darkMode');
