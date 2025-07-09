@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Input, Select, SelectItem, Switch, Slider, Card, CardBody, CardHeader, Chip } from '@heroui/react';
+import { Button, Input, Select, SelectItem, Switch, Slider, Card, CardBody, CardHeader, Chip, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/react';
 import { useSettings } from '../context/SettingsContext';
 import { useErrorToast } from '../context/ErrorToastContext';
 
@@ -35,6 +35,7 @@ const Settings = () => {
   const [cryptoInput, setCryptoInput] = useState('');
   const [countryInput, setCountryInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showSettingsWarning, setShowSettingsWarning] = useState(true);
 
   // Initialize input fields when settings are loaded
   useEffect(() => {
@@ -151,6 +152,46 @@ const Settings = () => {
 
   return (
     <div className="p-6">
+      {/* Settings Development Warning Modal */}
+      <Modal isOpen={showSettingsWarning} onClose={() => setShowSettingsWarning(false)} size="md" classNames={{
+        backdrop: "bg-black/50 backdrop-blur-sm",
+        base: "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700",
+        header: "bg-white dark:bg-gray-800",
+        body: "bg-white dark:bg-gray-800",
+        footer: "bg-white dark:bg-gray-800"
+      }}>
+        <ModalContent>
+          <ModalHeader>Settings - Development Notice</ModalHeader>
+          <ModalBody>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <div className="p-2 bg-yellow-100 dark:bg-yellow-800 rounded-full">
+                  <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    Settings are currently in development
+                  </p>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                    This section is not fully functional yet
+                  </p>
+                </div>
+              </div>
+              <p className="text-gray-700 dark:text-gray-200">
+                Soon, you'll be able to fully customize your DataPulse experience here. We're working to make settings much more powerful and tailored to your needs. Stay tuned!
+              </p>
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button color="primary" onClick={() => setShowSettingsWarning(false)}>
+              Got it
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+      {/* End Settings Development Warning Modal */}
       <div className="max-w-7xl mx-auto">
         {/* Header - Matching Dashboard Layout */}
         <div className="mb-8">
