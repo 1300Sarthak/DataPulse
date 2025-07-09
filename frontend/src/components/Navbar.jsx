@@ -8,15 +8,16 @@ const AppNavbar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showDarkModeWarning, setShowDarkModeWarning] = useState(false);
   const { resetVisit } = useUserVisit();
 
   useEffect(() => {
     const savedMode = localStorage.getItem('darkMode');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (savedMode !== null) {
       setIsDarkMode(savedMode === 'true');
     } else {
-      setIsDarkMode(prefersDark);
+      // Default to light mode instead of system preference
+      setIsDarkMode(false);
     }
   }, []);
 
@@ -38,7 +39,18 @@ const AppNavbar = () => {
   }, [mobileMenuOpen]);
 
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
+    if (!isDarkMode) {
+      // Show warning when trying to switch to dark mode
+      setShowDarkModeWarning(true);
+    } else {
+      // Allow switching back to light mode without warning
+      setIsDarkMode(false);
+    }
+  };
+
+  const confirmDarkMode = () => {
+    setIsDarkMode(true);
+    setShowDarkModeWarning(false);
   };
 
   const navLinks = [
@@ -211,6 +223,49 @@ const AppNavbar = () => {
             <button className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700" onClick={() => setShowProfileModal(false)}>
               Close
             </button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Dark Mode Warning Modal */}
+      <Modal isOpen={showDarkModeWarning} onClose={() => setShowDarkModeWarning(false)} size="md" classNames={{
+        backdrop: "bg-black/50 backdrop-blur-sm",
+        base: "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700",
+        header: "bg-white dark:bg-gray-800",
+        body: "bg-white dark:bg-gray-800",
+        footer: "bg-white dark:bg-gray-800"
+      }}>
+        <ModalContent>
+          <ModalHeader>Dark Mode - Development Notice</ModalHeader>
+          <ModalBody>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                <div className="p-2 bg-yellow-100 dark:bg-yellow-800 rounded-full">
+                  <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                    Dark mode is currently in development
+                  </p>
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                    Some components may not look optimal in dark mode
+                  </p>
+                </div>
+              </div>
+              <p className="text-gray-700 dark:text-gray-200">
+                We're working hard to perfect the dark mode experience. While you can still use it, please bear with us as we continue to improve the styling and ensure all components look great in both themes.
+              </p>
+            </div>
+          </ModalBody>
+          <ModalFooter>
+            <Button color="default" variant="bordered" onClick={() => setShowDarkModeWarning(false)}>
+              Cancel
+            </Button>
+            <Button color="primary" onClick={confirmDarkMode}>
+              Enable Dark Mode
+            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
